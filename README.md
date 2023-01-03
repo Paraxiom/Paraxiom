@@ -1,5 +1,16 @@
 # Federated and decentralised parachain oracle 
-### This builds a parachain with the relay chain's token (In this case ROC)
-1. cargo build --release --locked -p polkadot-parachain
-This runs the realy chain
-2. ./target/release/polkadot-parachain --chain oracle-rococo
+### Builds a parachain with the relay chain's token (In this case ROC)
+````
+cargo build --release --locked -p polkadot-parachain
+````
+
+### Runs a local network with oracle(contracts) parachain
+````
+./zombienet(-macos) --provider native spawn zombienet/examples/oracle_rococo_local_network.toml
+````
+
+
+### This runs the parachain on Rococo
+````
+./target/release/polkadot-parachain --chain oracle-rococo
+````
