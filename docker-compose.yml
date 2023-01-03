@@ -1,0 +1,17 @@
+version: "3.2"
+
+services:
+  dev:
+    container_name: oracleon
+    image: paritytech/ci-linux:production
+    working_dir: /var/www/oracleon
+    ports:
+      - "9944:9944"
+    environment:
+      - CARGO_HOME=/var/www/oracleon/.cargo
+    volumes:
+      - .:/var/www/oracleon
+      - type: bind
+        source: ./.local
+        target: /root/.local
+    command: bash -c "cargo build --release && ./target/release/oracleon --dev --ws-external"
