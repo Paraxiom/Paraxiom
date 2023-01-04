@@ -1,4 +1,7 @@
-# Federated and decentralised parachain oracle 
+# Federated and decentralised oracle 
+
+A paraxiom is a statement that appears to contradict an accepted truth, while in reality it is merely an alternate version of the accepted truth. 
+ It is often used in philosophical debates to challenge a traditional belief or assumption.
 ### Builds a parachain with the relay chain's token (In this case ROC)
 ````
 cargo build --release --locked -p polkadot-parachain
