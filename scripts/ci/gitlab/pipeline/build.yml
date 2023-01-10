@@ -86,14 +86,7 @@ build-runtime-collectives:
     - job:                         build-runtime-assets
       artifacts:                   false
 
-build-runtime-bridge-hubs:
-  <<: *build-runtime-template
-  variables:
-    RUNTIME_PATH:                  "parachains/runtimes/bridge-hubs"
-  # this is an artificial job dependency, for pipeline optimization using GitLab's DAGs
-  needs:
-    - job:                         build-runtime-collectives
-      artifacts:                   false
+
 
 build-runtime-contracts:
   <<: *build-runtime-template

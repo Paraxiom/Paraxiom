@@ -18,7 +18,7 @@ use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{
-		new_partial, Block, BridgeHubKusamaRuntimeExecutor, BridgeHubRococoRuntimeExecutor,
+		new_partial, Block, 
 		CollectivesPolkadotRuntimeExecutor, StatemineRuntimeExecutor, StatemintRuntimeExecutor,
 		WestmintRuntimeExecutor,
 	},
@@ -55,7 +55,7 @@ enum Runtime {
 	OracleRococo,
 	CollectivesPolkadot,
 	CollectivesWestend,
-	BridgeHub(chain_spec::bridge_hubs::BridgeHubRuntimeType),
+	
 }
 
 trait RuntimeResolver {
@@ -109,11 +109,6 @@ fn runtime(id: &str) -> Runtime {
 		Runtime::CollectivesPolkadot
 	} else if id.starts_with("collectives-westend") {
 		Runtime::CollectivesWestend
-	} else if id.starts_with(chain_spec::bridge_hubs::BridgeHubRuntimeType::ID_PREFIX) {
-		Runtime::BridgeHub(
-			id.parse::<chain_spec::bridge_hubs::BridgeHubRuntimeType>()
-				.expect("Invalid value"),
-		)
 	} else {
 		log::warn!("No specific runtime was recognized for ChainSpec's id: '{}', so Runtime::default() will be used", id);
 		Runtime::default()
@@ -208,14 +203,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 				&include_bytes!("../../parachains/chain-specs/oracle-rococo.json")[..],
 			)?),
 
-		// -- BridgeHub
-		bridge_like_id
-			if bridge_like_id
-				.starts_with(chain_spec::bridge_hubs::BridgeHubRuntimeType::ID_PREFIX) =>
-			bridge_like_id
-				.parse::<chain_spec::bridge_hubs::BridgeHubRuntimeType>()
-				.expect("invalid value")
-				.load_config()?,
+		
 
 		// -- Penpall
 		"penpal-kusama" => Box::new(chain_spec::penpal::get_penpal_chain_spec(
@@ -254,8 +242,6 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 				// 	Box::new(chain_spec::contracts::ContractsRococoChainSpec::from_json_file(path)?),
 				Runtime::OracleRococo =>
 					Box::new(chain_spec::oracle::OracleRococoChainSpec::from_json_file(path)?),	
-				Runtime::BridgeHub(bridge_hub_runtime_type) =>
-					bridge_hub_runtime_type.chain_spec_from_json_file(path.into())?,
 				Runtime::Penpal(_para_id) =>
 					Box::new(chain_spec::penpal::PenpalChainSpec::from_json_file(path)?),
 				Runtime::Default => Box::new(
@@ -334,8 +320,6 @@ impl SubstrateCli for Cli {
 			Runtime::Seedling => &seedling_runtime::VERSION,
 			// Runtime::ContractsRococo => &contracts_rococo_runtime::VERSION,
 			Runtime::OracleRococo => &oracle_rococo_runtime::VERSION,
-			Runtime::BridgeHub(bridge_hub_runtime_type) =>
-				bridge_hub_runtime_type.runtime_version(),
 			Runtime::Penpal(_) => &penpal_runtime::VERSION,
 			Runtime::Default => &rococo_parachain_runtime::VERSION,
 		}
@@ -503,48 +487,7 @@ macro_rules! construct_async_run {
 					{ $( $code )* }.map(|v| (v, task_manager))
 				})
 			},
-			Runtime::BridgeHub(bridge_hub_runtime_type) => {
-				 match bridge_hub_runtime_type {
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::Kusama |
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::KusamaLocal |
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::KusamaDevelopment => {
-						runner.async_run(|$config| {
-							let $components = new_partial::<chain_spec::bridge_hubs::kusama::RuntimeApi, _>(
-								&$config,
-								crate::service::aura_build_import_queue::<_, AuraId>,
-							)?;
-
-							let task_manager = $components.task_manager;
-							{ $( $code )* }.map(|v| (v, task_manager))
-						})
-					},
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::Rococo |
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::RococoLocal |
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::RococoDevelopment => {
-						runner.async_run(|$config| {
-							let $components = new_partial::<chain_spec::bridge_hubs::rococo::RuntimeApi, _>(
-								&$config,
-								crate::service::aura_build_import_queue::<_, AuraId>,
-							)?;
-
-							let task_manager = $components.task_manager;
-							{ $( $code )* }.map(|v| (v, task_manager))
-						})
-					},
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::Wococo |
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::WococoLocal => {
-						runner.async_run(|$config| {
-							let $components = new_partial::<chain_spec::bridge_hubs::wococo::RuntimeApi, _>(
-								&$config,
-								crate::service::aura_build_import_queue::<_, AuraId>,
-							)?;
-
-							let task_manager = $components.task_manager;
-							{ $( $code )* }.map(|v| (v, task_manager))
-						})
-					}
-				}
-			},
+			
 			Runtime::Penpal(_) | Runtime::Default => {
 				runner.async_run(|$config| {
 					let $components = new_partial::<
@@ -644,22 +587,6 @@ pub fn run() -> Result<()> {
 								cmd.run::<Block, StatemintRuntimeExecutor>(config),
 							Runtime::CollectivesPolkadot | Runtime::CollectivesWestend =>
 								cmd.run::<Block, CollectivesPolkadotRuntimeExecutor>(config),
-							Runtime::BridgeHub(bridge_hub_runtime_type) => match bridge_hub_runtime_type {
-								chain_spec::bridge_hubs::BridgeHubRuntimeType::Kusama |
-								chain_spec::bridge_hubs::BridgeHubRuntimeType::KusamaLocal |
-								chain_spec::bridge_hubs::BridgeHubRuntimeType::KusamaDevelopment =>
-									cmd.run::<Block, BridgeHubKusamaRuntimeExecutor>(config),
-								chain_spec::bridge_hubs::BridgeHubRuntimeType::Rococo |
-								chain_spec::bridge_hubs::BridgeHubRuntimeType::RococoLocal |
-								chain_spec::bridge_hubs::BridgeHubRuntimeType::RococoDevelopment =>
-									cmd.run::<Block, BridgeHubRococoRuntimeExecutor>(config),
-								_ => Err(format!(
-									"Chain '{:?}' doesn't support benchmarking for bridge_hub_runtime_type: {:?}",
-									config.chain_spec.runtime(),
-									bridge_hub_runtime_type
-								)
-									.into()),
-							}
 							_ => Err(format!(
 								"Chain '{:?}' doesn't support benchmarking",
 								config.chain_spec.runtime()
@@ -737,30 +664,7 @@ pub fn run() -> Result<()> {
 							task_manager,
 						))
 					}),
-				Runtime::BridgeHub(bridge_hub_runtime_type) => match bridge_hub_runtime_type {
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::Kusama |
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::KusamaLocal |
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::KusamaDevelopment => runner.async_run(|_| {
-						Ok((
-							cmd.run::<Block, HostFunctionsOf<BridgeHubKusamaRuntimeExecutor>>(),
-							task_manager,
-						))
-					}),
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::Rococo |
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::RococoLocal |
-					chain_spec::bridge_hubs::BridgeHubRuntimeType::RococoDevelopment => runner.async_run(|_| {
-						Ok((
-							cmd.run::<Block, HostFunctionsOf<BridgeHubRococoRuntimeExecutor>>(),
-							task_manager,
-						))
-					}),
-					_ => Err(format!(
-						"Chain '{:?}' doesn't support try-runtime for bridge_hub_runtime_type: {:?}",
-						runner.config().chain_spec.runtime(),
-						bridge_hub_runtime_type
-					)
-					.into()),
-				},
+				
 				Runtime::Shell => runner.async_run(|_| {
 					Ok((
 						cmd.run::<Block, HostFunctionsOf<crate::service::ShellRuntimeExecutor>>(),
@@ -922,35 +826,6 @@ pub fn run() -> Result<()> {
 					)
 					.await
 					.map(|r| r.0)
-					.map_err(Into::into),
-					Runtime::BridgeHub(bridge_hub_runtime_type) => match bridge_hub_runtime_type {
-						chain_spec::bridge_hubs::BridgeHubRuntimeType::Kusama |
-						chain_spec::bridge_hubs::BridgeHubRuntimeType::KusamaLocal |
-						chain_spec::bridge_hubs::BridgeHubRuntimeType::KusamaDevelopment =>
-							crate::service::start_generic_aura_node::<
-								chain_spec::bridge_hubs::kusama::RuntimeApi,
-								AuraId,
-							>(config, polkadot_config, collator_options, id, hwbench)
-							.await
-							.map(|r| r.0),
-						chain_spec::bridge_hubs::BridgeHubRuntimeType::Rococo |
-						chain_spec::bridge_hubs::BridgeHubRuntimeType::RococoLocal |
-						chain_spec::bridge_hubs::BridgeHubRuntimeType::RococoDevelopment =>
-							crate::service::start_generic_aura_node::<
-								chain_spec::bridge_hubs::rococo::RuntimeApi,
-								AuraId,
-							>(config, polkadot_config, collator_options, id, hwbench)
-							.await
-							.map(|r| r.0),
-						chain_spec::bridge_hubs::BridgeHubRuntimeType::Wococo |
-						chain_spec::bridge_hubs::BridgeHubRuntimeType::WococoLocal =>
-							crate::service::start_generic_aura_node::<
-								chain_spec::bridge_hubs::wococo::RuntimeApi,
-								AuraId,
-							>(config, polkadot_config, collator_options, id, hwbench)
-							.await
-							.map(|r| r.0),
-					}
 					.map_err(Into::into),
 					Runtime::Penpal(_) | Runtime::Default =>
 						crate::service::start_rococo_parachain_node(

@@ -1,0 +1,38 @@
+Hashfunctions
+fingerprint
+1:1
+evxcr
+b(Gav")
+Hex::from(b"Gav")
+fast unsecure
+twox_64("".[..])
+blake2_128
+faster secure
+blake2_256*
+Hex::from(hash)
+keccak_256*
+SHA
+SHA1
+SHA2-256
+SHA3
+MD5
+RIPEMD(BTC)
+Pre-image attacks
+second pre-image
+Almost same hash(prefix, suffix)
+Collision resistance
+partial resistance
+POW prexix all 0s
+More expensive
+REduce performance by shouting inpust ressembling
+DOS.
+Content derived indexing
+DataIntegrityChecks
+Account Abstractions
+Account identifier
+Public key representation
+Internal system ids
+Check for Collisions
+Commitement schemes
+Reveal
+
