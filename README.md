@@ -1,4 +1,6 @@
-# Federated and decentralised parachain oracle 
+# Federated and decentralised oracle 
+Paraxiom is a term used to refer to statements that appear to be self-contradictory or paradoxical in nature, but which actually make sense upon investigation. Examples of paraxioms are the "law of excluded middle" and the "law of non-contradiction".
+
 ### Builds a parachain with the relay chain's token (In this case ROC)
 ````
 cargo build --release --locked -p polkadot-parachain
