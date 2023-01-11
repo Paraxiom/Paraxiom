@@ -2,7 +2,7 @@
 resolver = "2"
 
 members = [
-	"pallets/template",
+	"pallets/registry",
 ]
 
 [profile.release]

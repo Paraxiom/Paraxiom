@@ -1,4 +1,4 @@
-//! Substrate Parachain Node Template CLI
+//! Paraxiom Node  CLI
 
 #![warn(missing_docs)]
 
