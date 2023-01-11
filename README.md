@@ -1,18 +1,22 @@
-# Federated and decentralised oracle 
-Paraxiom is a term used to refer to statements that appear to be self-contradictory or paradoxical in nature, but which actually make sense upon investigation. Examples of paraxioms are the "law of excluded middle" and the "law of non-contradiction".
+# Substrate Cumulus Parachain Template
 
-### Builds a parachain with the relay chain's token (In this case ROC)
-````
-cargo build --release --locked -p polkadot-parachain
-````
+A new [Cumulus](https://github.com/paritytech/cumulus/)-based Substrate node, ready for hacking ☁️..
 
-### Runs a local network with oracle(contracts) parachain
-````
-./zombienet(-macos) --provider native spawn zombienet/examples/oracle_rococo_local_network.toml
-````
+This project is originally a fork of the
+[Substrate Node Template](https://github.com/substrate-developer-hub/substrate-node-template)
+modified to include dependencies required for registering this node as a **parathread** or
+**parachain** to a **relay chain**.
+
+The stand-alone version of this template is hosted on the
+[Substrate Devhub Parachain Template](https://github.com/substrate-developer-hub/substrate-parachain-template/)
+for each release of Polkadot. It is generated directly to the upstream
+[Parachain Template in Cumulus](https://github.com/paritytech/cumulus/tree/master/parachain-template)
+at each release branch using the
+[Substrate Template Generator](https://github.com/paritytech/substrate-template-generator/).
+
+👉 Learn more about parachains [here](https://wiki.polkadot.network/docs/learn-parachains), and
+parathreads [here](https://wiki.polkadot.network/docs/learn-parathreads).
 
 
-### This runs the parachain on Rococo
-````
-./target/release/polkadot-parachain --chain oracle-rococo
-````
+🧙 Learn about how to use this template and run your own parachain testnet for it in the
+[Devhub Cumulus Tutorial](https://docs.substrate.io/tutorials/v3/cumulus/start-relay/).
