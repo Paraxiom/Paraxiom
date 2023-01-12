@@ -4,6 +4,10 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/v3/runtime/frame>
 pub use pallet::*;
+use frame_support::{
+    BoundedVec,
+};
+
 
 #[cfg(test)]
 mod mock;
@@ -14,14 +18,25 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+
+// Creator may be a AccountId or from a parachain
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
+pub enum CreatorId<AccountId> {
+	AccountId(AccountId),
+	ParaId(ParaId),
+}
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
-
+	
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		
+		
+		#[pallet::constant]
+		type StrLimit: Get<u32>;
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 	}
@@ -37,6 +52,32 @@ pub mod pallet {
 	// Learn more about declaring storage items:
 	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
 	pub type Something<T> = StorageValue<_, u32>;
+
+	// #[pallet::storage]
+    // #[pallet::getter(fn next_unsigned_at)]
+    // pub(super) type NextUnsignedAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
+	
+    /// Storage map for the feed URL Endpoint
+    #[pallet::storage]
+	#[pallet::getter(fn reporter_config)]
+	pub type ReporterConfig<T> = StorageValue<_, BoundedVec<u8,  <T as Config>::StrLimit>>;
+
+    // /// Raw values for each oracle operators
+	// #[pallet::storage]
+	// #[pallet::getter(fn raw_values)]
+	// pub type RawValues<T: Config> =
+	// 	StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, OracleKeyOf<T>, TimestampedValueT>;
+
+	// /// Up to date combined value from Raw Values
+	// #[pallet::storage]
+	// #[pallet::getter(fn values)]
+	// pub type Values<T: Config> =
+	// 	StorageMap<_, Twox64Concat, OracleKeyOf<T>, TimestampedValueT>;
+
+	// /// If an oracle operator has fed a value in this block
+	// #[pallet::storage]
+	// pub(crate) type HasDispatched<T: Config> =
+	// 	StorageValue<_, OrderedSet<CreatorId<T::AccountId>, T::MaxHasDispatchedSize>, ValueQuery>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
@@ -65,6 +106,7 @@ pub mod pallet {
 	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::call_index(0)]
