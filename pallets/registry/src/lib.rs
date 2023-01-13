@@ -29,8 +29,12 @@ pub enum CreatorId<AccountId> {
 }
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
+	
+use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::{*, OptionQuery, ValueQuery}, traits::Bounded};
 	use frame_system::pallet_prelude::*;
+
+	
+	
 	
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -39,6 +43,7 @@ pub mod pallet {
 		
 		#[pallet::constant]
 		type StrLimit: Get<u32>;
+		
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 	}
@@ -61,25 +66,17 @@ pub mod pallet {
 	
     /// Storage map for the feed URL Endpoint
     #[pallet::storage]
-	#[pallet::getter(fn reporter_config)]
-	pub type ReporterConfig<T> = StorageValue<_, BoundedVec<u8,  <T as Config>::StrLimit>>;
-
-    // /// Raw values for each oracle operators
-	// #[pallet::storage]
-	// #[pallet::getter(fn raw_values)]
-	// pub type RawValues<T: Config> =
-	// 	StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, OracleKeyOf<T>, TimestampedValueT>;
-
-	// /// Up to date combined value from Raw Values
-	// #[pallet::storage]
-	// #[pallet::getter(fn values)]
-	// pub type Values<T: Config> =
-	// 	StorageMap<_, Twox64Concat, OracleKeyOf<T>, TimestampedValueT>;
-
-	// /// If an oracle operator has fed a value in this block
-	// #[pallet::storage]
-	// pub(crate) type HasDispatched<T: Config> =
-	// 	StorageValue<_, OrderedSet<CreatorId<T::AccountId>, T::MaxHasDispatchedSize>, ValueQuery>;
+	#[pallet::getter(fn reporter)]
+	// pub type ReporterConfig<T> = StorageValue<_, Twox64Concat, OptionQuery, AccountId, BoundedVec<u8, <T as Config>::StrLimit>>;
+	pub(super) type Reporter<T: Config> = StorageMap
+    <
+        _,
+        Blake2_128Concat,
+        T::AccountId,
+        BoundedVec<BoundedVec<u8,  ConstU32<100> >,  ConstU32<100>> ,
+        ValueQuery 
+    >;
+    
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
