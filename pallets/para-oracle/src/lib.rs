@@ -1,4 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(dead_code)]
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
@@ -9,7 +12,7 @@ use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
     dispatch::{GetDispatchInfo, DispatchResultWithPostInfo},
-    log,
+    log, BoundedVec,
     pallet_prelude::*,
     traits::{Currency, EstimateCallFee, UnixTime, ChangeMembers, Get, SortedMembers},
     IterableStorageMap, IterableStorageDoubleMap,
@@ -23,6 +26,7 @@ use frame_system::{
     Config as SystemConfig,
 };
 use hex::ToHex;
+use serde_json::{Value as JValue};
 use scale_info::TypeInfo;
 use sp_std::{
     borrow::ToOwned, convert::TryFrom, convert::TryInto, 
@@ -56,8 +60,10 @@ mod benchmarking;
 
 pub mod weights;
 pub use weights::*;
-type BalanceOf<T> =
+pub type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+pub type OracleKeyOf<T> = BoundedVec<u8, <T as Config>::StrLimit>;
 
 /// Defines application identifier for crypto keys of this module.
 ///
@@ -97,49 +103,39 @@ pub mod crypto {
     }
 }
 
+/// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum ParaOracleMockFunc {
-    #[codec(index = 8u8)]
+    #[codec(index = 7u8)]
     xcm_feed_back { 
         key: Vec<u8>,
 		value: i64,
     },
 }
 
+/// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum ParaOracleMockCall {
-    #[codec(index = 167u8)]
+    #[codec(index = 168u8)]
     ParaOracleFeed(ParaOracleMockFunc),
 }
 
+// Creator may be a AccountId or from a parachain
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
 pub enum CreatorId<AccountId> {
 	AccountId(AccountId),
 	ParaId(ParaId),
 }
 
-
+/// Feed URL Endpoint data structure
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct ApiFeed<BlockNumber> {
     requested_block_number: BlockNumber,
     url: Option<Vec<u8>>,
-}
-
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Debug))]
-pub struct ParaFeed<BlockNumber> {
-    requested_block_number: BlockNumber,
-    para_id: Option<ParaId>,
-}
-
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
-pub struct CryptoComparePrice {
-    pub usdt: f64,
+    vpath: Option<Vec<u8>>,
 }
 
 enum TransactionType {
@@ -155,7 +151,7 @@ pub mod pallet {
     use super::*;
 
     //pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
-	pub(crate) type TimestampedValueOf<T> = TimestampedValue<<T as Config>::OracleValue, u128>;
+	pub(crate) type TimestampedValueT = TimestampedValue<i64, u128>;
 
 	#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -171,14 +167,14 @@ pub mod pallet {
         /// The identifier type for an offchain worker.
         type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
-        type Origin: From<<Self as SystemConfig>::Origin>
-            + Into<Result<CumulusOrigin, <Self as Config>::Origin>>;
+        type RuntimeOrigin: From<<Self as SystemConfig>::RuntimeOrigin>
+            + Into<Result<CumulusOrigin, <Self as Config>::RuntimeOrigin>>;
 
         /// The overarching event type.
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         /// The overarching dispatch call type.
-        type Call: From<Call<Self>> + Encode;
+        type RuntimeCall: From<Call<Self>> + Encode;
 
         type XcmSender: SendXcm;
 
@@ -200,16 +196,13 @@ pub mod pallet {
 
         /// Provide the implementation to combine raw values to produce
 		/// aggregated value
-		type CombineData: CombineData<Self::OracleKey, TimestampedValueOf<Self>>;
-
-        /// The data key type
-		type OracleKey: Parameter + Member + Eq + Into<Vec<u8>>;
-
-		/// The data value type
-		type OracleValue: Parameter + Member + Ord + From<i64> + Into<i64>;
+		type CombineData: CombineData<OracleKeyOf<Self>, TimestampedValueT>;
 
         /// Oracle operators.
 		type Members: SortedMembers<Self::AccountId>;
+
+        #[pallet::constant]
+		type StrLimit: Get<u32>;
 
 		/// Maximum size of HasDispatched
 		#[pallet::constant]
@@ -223,29 +216,26 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
-    #[pallet::getter( fn running_status)]
-    type SystemRunnig<T> = StorageValue<_, bool, ValueQuery>;
-
-    #[pallet::storage]
     #[pallet::getter(fn next_unsigned_at)]
     pub(super) type NextUnsignedAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
 
+    /// Storage map for the feed URL Endpoint
     #[pallet::storage]
 	#[pallet::getter(fn api_feeds)]
 	pub type ApiFeeds<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, T::OracleKey, ApiFeed<T::BlockNumber>>;
+		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, OracleKeyOf<T>, ApiFeed<T::BlockNumber>>;
 
     /// Raw values for each oracle operators
 	#[pallet::storage]
 	#[pallet::getter(fn raw_values)]
 	pub type RawValues<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, T::OracleKey, TimestampedValueOf<T>>;
+		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, OracleKeyOf<T>, TimestampedValueT>;
 
 	/// Up to date combined value from Raw Values
 	#[pallet::storage]
 	#[pallet::getter(fn values)]
 	pub type Values<T: Config> =
-		StorageMap<_, Twox64Concat, <T as Config>::OracleKey, TimestampedValueOf<T>>;
+		StorageMap<_, Twox64Concat, OracleKeyOf<T>, TimestampedValueT>;
 
 	/// If an oracle operator has fed a value in this block
 	#[pallet::storage]
@@ -298,16 +288,6 @@ pub mod pallet {
             // This function reads storage entries of the current state.
             let res = Self::fetch_api_and_feed_data(block_number);
 
-            // let should_send = Self::choose_transaction_type(block_number);
-            // let res = match should_send {
-            //     TransactionType::Signed => Self::fetch_data_and_send_signed(block_number),
-            //     TransactionType::Raw
-            //     | TransactionType::UnsignedForAll
-            //     | TransactionType::UnsignedForAny => {
-            //         Self::fetch_data_and_send_raw_unsigned(block_number)
-            //     }
-            //     _ => Ok(()),
-            // };
             if let Err(e) = res {
                 log::error!("Error: {}", e);
             }
@@ -324,11 +304,17 @@ pub mod pallet {
     {
         /// Feed the external value.
 		///
-		/// Require authorized operator.
+		/// Call by the offchain worker.
+		///
+		/// # Parameter:
+		/// * `values` - value array for the feed
+		/// 
+		/// # Emits
+		/// * `NewFeedData`
 		#[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
 		pub fn feed_data(
 			origin: OriginFor<T>,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
+			values: Vec<(OracleKeyOf<T>, i64)>,
 		) -> DispatchResultWithPostInfo {
 			let feeder = ensure_signed(origin.clone())?;
             let cid = CreatorId::AccountId(feeder);
@@ -360,13 +346,22 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+        /// Feed the external value.
+		///
+		/// Can be only XCM call from reporter parachain.
+		///
+		/// # Parameter:
+		/// * `values` - value array for the feed
+		/// 
+		/// # Emits
+		/// * `NewFeedData`
         #[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
 		pub fn xcm_feed_data(
 			origin: OriginFor<T>,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
+			values: Vec<(OracleKeyOf<T>, i64)>,
 		) -> DispatchResultWithPostInfo {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // // ensure feeder is authorized
@@ -396,13 +391,20 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
         
+        /// Query the feed data.
+		///
+		/// Can be only XCM call from feed parachain.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// 
         #[pallet::weight(T::WeightInfo::query_data())]
 		pub fn xcm_query_data(
 			origin: OriginFor<T>,
-			key: T::OracleKey,
+			key: OracleKeyOf<T>,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
             if let Some(val) = Self::get(&key) {
                 Self::send_qret_to_parachain(para_id, key.into(), val.value.into())
@@ -412,56 +414,49 @@ pub mod pallet {
             
 		}
 
-        //#[pallet::weight(T::BlockWeights::get().max_block)]
-        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
-		pub fn xcm_evt(
-			origin: OriginFor<T>,
-		) -> DispatchResultWithPostInfo {
-            let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
-
-            Self::deposit_event(Event::NewParaEvt {para_id });
-			Ok(Pays::No.into())
-		}
-
-        //#[pallet::weight(T::BlockWeights::get().max_block)]
-        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
-		pub fn xcm_evt1(
-			origin: OriginFor<T>,
-		) -> DispatchResultWithPostInfo {
-            let feeder = ensure_signed(origin.clone())?;
-
-            Self::deposit_event(Event::NewParaEvt1 {sender: feeder });
-			Ok(Pays::No.into())
-		}
-
+        /// Submit the URL Endpoint for the feed.
+		///
+		/// Can be called by authorized origin.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// * `url` - url for the feed
+        /// * `vpath` - value path of the URL result
+		///     example: json = {"x":{"y": ["z", "zz"]}}
+        ///     path: "/x/y/1" = "zz" 
+		/// 
+		/// # Emits
+		/// * `NewApiFeed`
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
             url: Vec<u8>,
-        ) -> DispatchResultWithPostInfo {
+            vpath: Vec<u8>,
+        ) -> DispatchResult {
             let submitter = ensure_signed(origin.clone())?;
             let cid = CreatorId::AccountId(submitter);
 
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
             
-            let block_number = <system::Pallet<T>>::block_number();
-            let feed = ApiFeed {
-                    requested_block_number: block_number,
-                    url: Some(url),
-                };
-            ApiFeeds::<T>::insert(&cid, &key, feed.clone());
-
-            Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
-			Ok(Pays::No.into())
+            Self::do_submit_api(cid, key, url, vpath)?;
+			Ok(())
         }
 
+        /// Remove the URL Endpoint for the feed.
+		///
+		/// Can be called by authorized origin.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// 
+		/// # Emits
+		/// * `ApiFeedRemoved`
         #[pallet::weight(T::WeightInfo::remove_api())]
         pub fn remove_api(
             origin: OriginFor<T>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
         ) -> DispatchResult {
             let submitter = ensure_signed(origin.clone())?;
             let cid = CreatorId::AccountId(submitter);
@@ -469,62 +464,64 @@ pub mod pallet {
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
-            let feed_exists = ApiFeeds::<T>::contains_key(&cid, &key);
-            if feed_exists {
-                let feed = Self::api_feeds(&cid, &key).unwrap();
-                <ApiFeeds<T>>::remove(&cid, &key);
-                Self::deposit_event(Event::ApiFeedRemoved { sender: cid, key, feed });
-                Ok(())
-            } else {
-                Err(DispatchError::CannotLookup)
-            }
+            Self::do_remove_api(cid, key)?;
+            Ok(())
         }
 
+        /// Submit the URL Endpoint for the feed.
+		///
+		/// Can be only XCM call from feed parachain.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// * `url` - url for the feed
+		/// * `vpath` - value path of the URL result
+		///     example: json = {"x":{"y": ["z", "zz"]}}
+        ///     path: "/x/y/1" = "zz"
+        ///  
+		/// # Emits
+		/// * `NewApiFeed`
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn xcm_submit_api(
             origin: OriginFor<T>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
             url: Vec<u8>,
-        ) -> DispatchResultWithPostInfo {
+            vpath: Vec<u8>,
+        ) -> DispatchResult {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
             
-            let block_number = <system::Pallet<T>>::block_number();
-            let feed = ApiFeed {
-                    requested_block_number: block_number,
-                    url: Some(url),
-                };
-            ApiFeeds::<T>::insert(&cid, &key, feed.clone());
-
-            Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
-			Ok(Pays::No.into())
+            Self::do_submit_api(cid, key, url, vpath)?;
+			Ok(())
         }
 
+        /// Remove the URL Endpoint for the feed.
+		///
+		/// Can be only XCM call from feed parachain.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// 
+		/// # Emits
+		/// * `ApiFeedRemoved`
         #[pallet::weight(T::WeightInfo::remove_api())]
         pub fn xcm_remove_api(
             origin: OriginFor<T>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
         ) -> DispatchResult {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
-            let feed_exists = ApiFeeds::<T>::contains_key(&cid, &key);
-            if feed_exists {
-                let feed = Self::api_feeds(&cid, &key).unwrap();
-                <ApiFeeds<T>>::remove(&cid, &key);
-                Self::deposit_event(Event::ApiFeedRemoved { sender: cid, key, feed });
-                Ok(())
-            } else {
-                Err(DispatchError::CannotLookup)
-            }
+            Self::do_remove_api(cid, key)?;
+            Ok(())
         }
         
     }
@@ -547,7 +544,7 @@ pub mod pallet {
         /// New feed data is submitted.
 		NewFeedData {
 			sender: CreatorId<T::AccountId>,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
+			values: Vec<(OracleKeyOf<T>, i64)>,
 		},
         NewParaEvt {
             para_id: ParaId,
@@ -558,13 +555,13 @@ pub mod pallet {
         /// New feed is submitted.
 		NewApiFeed {
 			sender: CreatorId<T::AccountId>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
             feed: ApiFeed<T::BlockNumber>,
 		},
         /// Apifeed is removed.
 		ApiFeedRemoved {
 			sender: CreatorId<T::AccountId>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
             feed: ApiFeed<T::BlockNumber>,
 		},
     }
@@ -668,41 +665,29 @@ where T::AccountId: AsRef<[u8]>
             )?;
         }
 
-        let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
+        let mut values = Vec::<(OracleKeyOf<T>, i64)>::new();
         for (_creator, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
             // let mut response :Vec<u8>;
-            if val.url.is_some() {
+            if val.url.is_some() && val.vpath.is_some() {
+                let vpath = val.vpath.unwrap();
                 let response = Self::fetch_http_get_result(val.url.clone().unwrap())
                     .map_err(|_| "Failed fetch http")?;
+                let res_json :JValue = serde_json::from_slice(&response)
+                    .map_err(|_| "Response JSON was not well-formatted")?;
+                let path = str::from_utf8(&vpath)
+                    .map_err(|_| "vpath contain invalid utf8 string")?;
+                let fval = res_json.pointer(path)
+                    .ok_or("vpath error")?
+                    .as_f64()
+                    .ok_or("vpath value type error")?;
 
-                let oval :T::OracleValue;
-                match str::from_utf8(&key.clone().into()) {
-                    Ok("CCApi") => {
-                        let price: CryptoComparePrice = serde_json::from_slice(&response)
-                            .map_err(|_| "Response JSON was not well-formatted")?;
-                        // We only store int, so every float will be convert to int with 6 decimals pad
-                        let pval = (price.usdt * 1000000.0) as i64;
-                        oval = pval.into();
-                        values.push((key.clone(), oval));
-                    },
-                    Ok("CWApi") => {
-                        let price: CryptoComparePrice = serde_json::from_slice(&response)
-                            .map_err(|_| "Response JSON was not well-formatted")?;
-                        // We only store int, so every float will be convert to int with 6 decimals pad
-                        let pval = (price.usdt * 1000000.0) as i64;
-                        oval = pval.into();
-                        values.push((key.clone(), oval));
-                    },
-                    Ok(k) => {
-                        log::debug!("No match API key [{:?}]", k);
-                    },
-                    _ => {},
-                }   
+                // We only store int, so every float will be convert to int with 6 decimals pad
+                let ival :i64 = (fval * 1000000.0) as i64;
+                values.push((key.clone(), ival));
             }
         }
 
         if values.len() > 0 {
-
             let results = signer.send_signed_transaction(|_account| Call::feed_data {
                 values: values.clone(),
             });
@@ -810,24 +795,58 @@ where T::AccountId: AsRef<[u8]>
             .build()
     }
 
-    pub fn read_raw_values(key: &T::OracleKey) -> Vec<TimestampedValueOf<T>> {
+    pub fn read_raw_values(key: &OracleKeyOf<T>) -> Vec<TimestampedValueT> {
         <RawValues<T> as IterableStorageDoubleMap<_, _, _>>::iter()
             .filter_map(|(_, k, val)| if *key == k { Some(val) } else { None })
             .collect()
 	}
 
 	/// Fetch current combined value.
-	pub fn get(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
+	pub fn get(key: &OracleKeyOf<T>) -> Option<TimestampedValueT> {
 		Self::values(key)
 	}
 
 	#[allow(clippy::complexity)]
-	pub fn get_all_values() -> Vec<(T::OracleKey, Option<TimestampedValueOf<T>>)> {
+	pub fn get_all_values() -> Vec<(OracleKeyOf<T>, Option<TimestampedValueT>)> {
 		<Values<T>>::iter().map(|(k, v)| (k, Some(v))).collect()
 	}
 
-	fn combined(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
+	fn combined(key: &OracleKeyOf<T>) -> Option<TimestampedValueT> {
 		let values = Self::read_raw_values(key);
 		T::CombineData::combine_data(key, values, Self::values(key))
 	}
+
+    pub fn do_submit_api(
+        cid: CreatorId<T::AccountId>,
+        key: OracleKeyOf<T>,
+        url: Vec<u8>,
+        vpath: Vec<u8>,
+    ) -> DispatchResult {
+        let block_number = <system::Pallet<T>>::block_number();
+        let feed = ApiFeed {
+                requested_block_number: block_number,
+                url: Some(url),
+                vpath: Some(vpath),
+            };
+        ApiFeeds::<T>::insert(&cid, &key, feed.clone());
+
+        Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
+        Ok(())
+    }
+
+    pub fn do_remove_api(
+        cid: CreatorId<T::AccountId>,
+        key: OracleKeyOf<T>,
+    ) -> DispatchResult {
+        let feed_exists = ApiFeeds::<T>::contains_key(&cid, &key);
+        if feed_exists {
+            let feed = Self::api_feeds(&cid, &key).unwrap();
+            <ApiFeeds<T>>::remove(&cid, &key);
+            Self::deposit_event(Event::ApiFeedRemoved { sender: cid, key, feed });
+            Ok(())
+        } else {
+            Err(DispatchError::CannotLookup)
+        }
+    }
+
 }
