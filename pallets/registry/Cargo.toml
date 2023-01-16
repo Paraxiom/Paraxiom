@@ -24,7 +24,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", default-featur
 serde = { version = "1.0.132" }
 
 # Substrate
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot" }
 sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.36" }
