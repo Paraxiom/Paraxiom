@@ -5,7 +5,7 @@ members = [
 	"pallets/registry",
 	"pallets/para-oracle",
 	"node",
-	"runtime",
+	"runtime/paraxiom",
 ]
 
 [profile.release]
