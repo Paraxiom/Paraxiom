@@ -311,6 +311,7 @@ pub mod pallet {
 		/// 
 		/// # Emits
 		/// * `NewFeedData`
+        #[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
 		pub fn feed_data(
 			origin: OriginFor<T>,
@@ -355,6 +356,7 @@ pub mod pallet {
 		/// 
 		/// # Emits
 		/// * `NewFeedData`
+        #[pallet::call_index(1)]
         #[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
 		pub fn xcm_feed_data(
 			origin: OriginFor<T>,
@@ -398,6 +400,7 @@ pub mod pallet {
 		/// # Parameter:
 		/// * `key` - key for the feed
 		/// 
+        #[pallet::call_index(2)]
         #[pallet::weight(T::WeightInfo::query_data())]
 		pub fn xcm_query_data(
 			origin: OriginFor<T>,
@@ -427,6 +430,7 @@ pub mod pallet {
 		/// 
 		/// # Emits
 		/// * `NewApiFeed`
+        #[pallet::call_index(3)]
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
@@ -453,6 +457,7 @@ pub mod pallet {
 		/// 
 		/// # Emits
 		/// * `ApiFeedRemoved`
+        #[pallet::call_index(4)]
         #[pallet::weight(T::WeightInfo::remove_api())]
         pub fn remove_api(
             origin: OriginFor<T>,
@@ -481,6 +486,7 @@ pub mod pallet {
         ///  
 		/// # Emits
 		/// * `NewApiFeed`
+        #[pallet::call_index(5)]
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn xcm_submit_api(
             origin: OriginFor<T>,
@@ -508,6 +514,7 @@ pub mod pallet {
 		/// 
 		/// # Emits
 		/// * `ApiFeedRemoved`
+        #[pallet::call_index(6)]
         #[pallet::weight(T::WeightInfo::remove_api())]
         pub fn xcm_remove_api(
             origin: OriginFor<T>,
