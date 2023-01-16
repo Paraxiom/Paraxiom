@@ -17,7 +17,7 @@ serde = { version = "1.0.152", features = ["derive"] }
 jsonrpsee = { version = "0.16.2", features = ["server"] }
 
 # Local
-paraxiom-runtime = { path = "../runtime" }
+paraxiom-runtime = { path = "../runtime/paraxiom" }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }

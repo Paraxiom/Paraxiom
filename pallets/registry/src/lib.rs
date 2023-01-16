@@ -40,10 +40,6 @@ use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::{*, Op
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		
-		
-		#[pallet::constant]
-		type StrLimit: Get<u32>;
-		
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 	}
