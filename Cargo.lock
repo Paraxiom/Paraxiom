@@ -4816,36 +4816,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-traits"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.36#4f5a3f34d8cbd98b7bc2e295219a3e7b99b9ecaf"
-dependencies = [
- "frame-support",
- "impl-trait-for-tuples",
- "num-traits",
- "orml-utilities",
- "parity-scale-codec",
- "scale-info",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "xcm",
-]
-
-[[package]]
-name = "orml-utilities"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.36#4f5a3f34d8cbd98b7bc2e295219a3e7b99b9ecaf"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "os_str_bytes"
 version = "6.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5505,7 +5475,6 @@ name = "pallet-registry"
 version = "0.1.0"
 dependencies = [
  "cumulus-primitives-core",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -5514,6 +5483,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5834,36 +5804,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "xcm",
- "xcm-executor",
-]
-
-[[package]]
-name = "para-oracle"
-version = "3.0.0"
-dependencies = [
- "cumulus-pallet-xcm",
- "cumulus-primitives-core",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex",
- "orml-traits",
- "orml-utilities",
- "pallet-balances",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-xcm",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-keystore",
- "sp-runtime",
- "sp-std",
- "xcm",
- "xcm-builder",
  "xcm-executor",
 ]
 

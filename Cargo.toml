@@ -3,7 +3,6 @@ resolver = "2"
 
 members = [
 	"pallets/registry",
-	"pallets/para-oracle",
 	"node",
 	"runtime/paraxiom",
 ]
