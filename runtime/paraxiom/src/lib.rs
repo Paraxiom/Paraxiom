@@ -484,7 +484,9 @@ construct_runtime!(
 
 		// Registry
 		RegistryPallet: pallet_registry::{Pallet, Call, Storage, Event<T>}  = 40,
-		
+		// Oracle Pallets
+		// OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 41,
+		// ParaOraclePallet: para_oracle = 42,
 	}
 );
 
