@@ -118,6 +118,8 @@ pub type Executive = frame_executive::Executive<
 	AllPalletsWithSystem,
 >;
 
+use phat_offchain_rollup::{anchor as pallet_anchor, oracle as pallet_oracle};
+
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.
 ///
@@ -450,6 +452,23 @@ impl pallet_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 }
 
+parameter_types! {
+    pub const QueuePrefix: &'static [u8] = b"_queue/";
+    pub const QueueCapacity: u32 = 128;
+}
+
+impl pallet_anchor::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type OnResponse = PhatOracle;
+    type QueuePrefix = QueuePrefix;
+    type QueueCapacity = QueueCapacity;
+}
+impl pallet_oracle::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+}
+
+
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -487,6 +506,10 @@ construct_runtime!(
 		// Oracle Pallets
 		// OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 41,
 		// ParaOraclePallet: para_oracle = 42,
+		// Rollup and Oracles
+        PhatRollupAnchor: pallet_anchor = 100,
+        PhatOracle: pallet_oracle = 101,
+
 	}
 );
 

@@ -1,0 +1,10 @@
+/.devphase
+/artifacts
+/contracts/*/target
+/logs
+/stacks
+
+/accounts.json
+/contracts.json
+
+node_modules
