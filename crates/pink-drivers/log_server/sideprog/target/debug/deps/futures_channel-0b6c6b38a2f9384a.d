@@ -1,0 +1,10 @@
+/home/silvereau/phala-blockchain/crates/pink-drivers/log_server/sideprog/target/debug/deps/futures_channel-0b6c6b38a2f9384a.rmeta: /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/lib.rs /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/lock.rs /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/mpsc/mod.rs /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/mpsc/queue.rs /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/mpsc/sink_impl.rs /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/oneshot.rs
+
+/home/silvereau/phala-blockchain/crates/pink-drivers/log_server/sideprog/target/debug/deps/futures_channel-0b6c6b38a2f9384a.d: /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/lib.rs /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/lock.rs /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/mpsc/mod.rs /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/mpsc/queue.rs /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/mpsc/sink_impl.rs /home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/oneshot.rs
+
+/home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/lib.rs:
+/home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/lock.rs:
+/home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/mpsc/mod.rs:
+/home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/mpsc/queue.rs:
+/home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/mpsc/sink_impl.rs:
+/home/silvereau/.cargo/registry/src/github.com-1ecc6299db9ec823/futures-channel-0.3.25/src/oneshot.rs:

@@ -1,0 +1,36 @@
+[package]
+name = "phala-types"
+version = "0.3.0"
+authors = ["h4x3rotab <h4x3rotab@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+serde = { version = "1.0.101", default-features = false, optional = true }
+codec = { package = "parity-scale-codec", version = "3.1", default-features = false, features = ["full"] }
+scale-info = { version = "2.1", default-features = false, features = ["derive"] }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", default-features = false }
+
+phala-mq = { path = "../../crates/phala-mq", default-features = false }
+prpc = { path = "../../crates/prpc", default-features = false }
+
+[features]
+default = ["std", "enable_serde"]
+std = [
+	"serde/std",
+	"scale-info/std",
+	"codec/std",
+	"full_crypto",
+	"sp-core/std",
+]
+enable_serde = [
+	"serde/derive",
+	"serde/alloc",
+	"scale-info/serde",
+]
+sgx = [
+	"full_crypto",
+]
+full_crypto = [
+	"sp-core/full_crypto",
+]

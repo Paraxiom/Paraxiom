@@ -1,0 +1,16 @@
+Writing generated file: /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/settings.rs
+Writing generated file: /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/types.rs
+Writing generated file: /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/opcodes.rs
+Writing generated file: /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/clif.isle
+Writing generated file: /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/inst_builder.rs
+Writing generated file: /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/settings-x86.rs
+Writing generated file: /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/settings-arm64.rs
+Rebuilding /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/isle_x64.rs
+Writing ISLE-generated Rust code to /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/isle_x64.rs
+Rebuilding /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/isle_aarch64.rs
+Writing ISLE-generated Rust code to /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/isle_aarch64.rs
+Rebuilding /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/isle_s390x.rs
+Writing ISLE-generated Rust code to /home/silvereau/phala-blockchain/crates/sidevm/host/target/debug/build/cranelift-codegen-bcfd0d9512dca4bc/out/isle_s390x.rs
+fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'
