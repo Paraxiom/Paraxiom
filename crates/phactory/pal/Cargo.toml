@@ -1,0 +1,9 @@
+[package]
+name = "phactory-pal"
+version = "0.1.0"
+edition = "2018"
+description = "Platform abstraction layer for Phactory Runtime"
+
+[dependencies]
+anyhow = "1.0.43"
+phala-types = { path = "../../phala-types", default-features = false, features = ["enable_serde", "sgx"] }

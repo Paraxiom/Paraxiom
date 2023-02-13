@@ -42,7 +42,7 @@ orml-utilities = { git = "https://github.com/open-web3-stack/open-runtime-module
 serde = { version = "1.0.136", features = ["derive"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
+
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 
