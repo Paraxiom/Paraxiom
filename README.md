@@ -57,7 +57,7 @@ cd ~/phat-offchain-rollup/phat
 
 reset && yarn devphase contract test
 ```
-You should you see output on the host parachain.
+You should you see output on the oracle parachain.
 
 ![Screenshot from 2023-02-16 11-24-43](https://user-images.githubusercontent.com/6019499/219456659-92e82249-ca82-4139-bc35-d63fe0331cec.png)
 
