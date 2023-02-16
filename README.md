@@ -50,6 +50,8 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
 
 Run rollups test
 ```
+cd ~/phat-offchain-rollup/phat
+
 reset && yarn devphase contract test
 ```
 You should you see output on the host parachain.
