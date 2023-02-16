@@ -29,10 +29,11 @@ cargo build --release
 ##### Run relay and parachain 
 ##### Get your zombienet on:
 https://github.com/paritytech/zombienet/releases
+
 ```
 cd testnet
 
-./zombienet-macos spawn --provider native network.toml
+./zombienet-linux-x64 spawn --provider native network.toml
 
 ```
 ##### Possible ubuntu issue: Install openssl
