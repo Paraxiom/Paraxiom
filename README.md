@@ -2,8 +2,8 @@
 # Federated and decentralized parachain oracle system
 
 This project will offer a multi level data aggregation solution, 
-a staking/slashing mechanism, and just registration and dispute 
-resolution process.
+a staking/slashing mechanism, a efficient registration service a
+and a just dispute resolution process.
 The parachain oracle ecosystem will be built using substrate 
 pallets/contracts and xcm.
 This protocol, along with the Polkadot and Kusama parachain 
