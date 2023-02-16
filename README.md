@@ -51,6 +51,7 @@ make install
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
 ```
 ##### Change httpRPC value: according to your OracleChain
+![Screenshot from 2023-02-16 13-58-41](https://user-images.githubusercontent.com/6019499/219461615-4119e3da-77a4-49da-a838-bb69a8371afb.png)
 https://github.com/Paraxiom/Paraxiom/blob/40a609f5b3d15c2bbba12f6820337a54f47c4b88/phat-offchain-rollup/phat/tests/substrate.test.ts#L17
 
 
@@ -63,7 +64,7 @@ cd ~/phat-offchain-rollup/phat
 reset && yarn devphase contract test
 ```
 You should you see output on the oracle parachain.
-![Screenshot from 2023-02-16 13-58-41](https://user-images.githubusercontent.com/6019499/219461615-4119e3da-77a4-49da-a838-bb69a8371afb.png)
+
 ![Screenshot from 2023-02-16 11-24-43](https://user-images.githubusercontent.com/6019499/219456659-92e82249-ca82-4139-bc35-d63fe0331cec.png)
 
 
