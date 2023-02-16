@@ -26,7 +26,7 @@ as a mechanism for securing reporter data.
 ```
 cargo build --release
 ```
-#####Run relay and parachain 
+##### Run relay and parachain 
 ##### Get your zombienet on:
 https://github.com/paritytech/zombienet/releases
 ```
@@ -35,7 +35,7 @@ cd testnet
 ./zombienet-macos spawn --provider native network.toml
 
 ```
-#####  Possible ubuntu issue: Install openssl
+##### Possible ubuntu issue: Install openssl
 ```
 wget https://www.openssl.org/source/openssl-1.1.1o.tar.gz
 tar -zxvf openssl-1.1.1o.tar.gz
