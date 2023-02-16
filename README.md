@@ -22,18 +22,20 @@ as a mechanism for securing reporter data.
 ##### *** this is MVP work, please forgive the imbricated applications/directories. ***
 ##### *** Strongly suggested using latest ubuntu ***
 
-Build 
+##### Build 
 ```
 cargo build --release
 ```
-Run relay and parachain 
+#####Run relay and parachain 
+##### Get your zombienet on:
+https://github.com/paritytech/zombienet/releases
 ```
 cd testnet
 
 ./zombienet-macos spawn --provider native network.toml
 
 ```
-####  Possible ubuntu issue: Install openssl
+#####  Possible ubuntu issue: Install openssl
 ```
 wget https://www.openssl.org/source/openssl-1.1.1o.tar.gz
 tar -zxvf openssl-1.1.1o.tar.gz
@@ -43,12 +45,12 @@ make
 make test
 make install
 ```
-#### Set the env var before running pruntime
+##### Set the env var before running pruntime
 ```
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
 ```
 
-Run rollups test
+##### Run rollups test
 ```
 cd ~/phat-offchain-rollup/phat
 
