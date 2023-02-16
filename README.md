@@ -33,9 +33,7 @@ cd testnet
 ./zombienet-macos spawn --provider native network.toml
 
 ```
-Run rollups test
-Ubuntu problems.
-Install openssl
+####  Possible ubuntu issue: Install openssl
 ```
 wget https://www.openssl.org/source/openssl-1.1.1o.tar.gz
 tar -zxvf openssl-1.1.1o.tar.gz
@@ -49,7 +47,8 @@ make install
 ```
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
 ```
-Then run the test
+
+Run rollups test
 ```
 reset && yarn devphase contract test
 ```
