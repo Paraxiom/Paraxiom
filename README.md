@@ -46,7 +46,7 @@ make
 make test
 make install
 ```
-##### Set the env var before running pruntime
+##### Set the env var
 ```
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
 ```
