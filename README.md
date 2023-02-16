@@ -50,6 +50,10 @@ make install
 ```
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
 ```
+##### Change httpRPC value: according to your OracleChain
+https://github.com/Paraxiom/Paraxiom/blob/40a609f5b3d15c2bbba12f6820337a54f47c4b88/phat-offchain-rollup/phat/tests/substrate.test.ts#L17
+
+
 
 ##### Run rollups test
 ```
