@@ -19,8 +19,8 @@ as a mechanism for securing reporter data.
 
 
 ### running instructions:
-#### *this is MVP work, please forgive the impricated applications/directories.*
-#### *Strongly suggested using latest ubuntu*
+##### *** this is MVP work, please forgive the imbricated applications/directories. ***
+##### *** Strongly suggested using latest ubuntu ***
 
 Build 
 ```
