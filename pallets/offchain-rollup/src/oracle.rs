@@ -61,6 +61,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Sends a request to the oracle
 		#[pallet::weight(0)]
+		#[pallet::call_index(0)]
 		#[transactional]
 		pub fn request(
 			origin: OriginFor<T>,
@@ -71,6 +72,43 @@ pub mod pallet {
 			ensure_signed(origin)?;
 			Ok(())
 		}
+		/// Sends a request to the oracle
+		#[pallet::weight(0)]
+		#[pallet::call_index(1)]
+		#[transactional]
+		pub fn feeds(
+			origin: OriginFor<T>,
+			_name: H256,
+			_data: RequestBytes,
+			_nonce: u128,
+		) -> DispatchResult {
+			ensure_signed(origin)?;
+			Ok(())
+		}
+		#[pallet::weight(0)]
+		#[pallet::call_index(2)]
+		#[transactional]
+		pub fn retreive_all_feeds(
+			origin: OriginFor<T>,
+			_name: H256,
+			_data: RequestBytes,
+			_nonce: u128,
+		) -> DispatchResult {
+			ensure_signed(origin)?;
+
+			let mut price_feeds = Vec::new();
+			let mut accounts = Vec::new();
+			let mut trading_pair_bytes = Vec::new();
+			PriceFeeds::<T>::iter().for_each(|(account, trading_pair, price_quote)| {
+				accounts.push(account);
+				trading_pair_bytes.push(trading_pair);
+				price_feeds.push(price_quote);
+			});
+		Ok(())
+		}	
+
+
+
 	}
 
 	impl<T: Config> crate::anchor::OnResponse<T::AccountId> for Pallet<T> {
