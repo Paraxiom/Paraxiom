@@ -419,8 +419,12 @@ impl pallet_aura::Config for Runtime {
 	type MaxAuthorities = ConstU32<100_000>;
 }
 
+const id: [u8; 8] = *b"PotStake";
+
 parameter_types! {
-	pub const PotId:  = PalletId(*b"PotStake");
+    
+   
+	pub const PotId: PalletId = PalletId(id);
 	pub const MaxCandidates: u32 = 1000;
 	pub const MinCandidates: u32 = 5;
 	pub const SessionLength: BlockNumber = 6 * HOURS;
