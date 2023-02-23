@@ -25,7 +25,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	pub type TradingPairBytes = BoundedVec<u8, ConstU32<64>>;
-
+	pub type PriceQuotes = BoundedVec<PriceQuote, ConstU32<6>>;
 	/// Mapping from (deployer, traiding_pair) to price feed quotes
 	#[pallet::storage]
 	#[pallet::getter(fn price_feeds)]
@@ -35,8 +35,18 @@ pub mod pallet {
 		AccountId32,
 		Blake2_128Concat,
 		TradingPairBytes,
-		PriceQuote,
+		PriceQuotes,
 	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn mean_average)]
+	pub type Average<T: Config> = StorageMap<
+		_, 
+		Twox64Concat, 
+		TradingPairBytes, 
+		PriceQuote
+	>;
+	
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -85,27 +95,8 @@ pub mod pallet {
 			ensure_signed(origin)?;
 			Ok(())
 		}
-		#[pallet::weight(0)]
-		#[pallet::call_index(2)]
-		#[transactional]
-		pub fn retreive_all_feeds(
-			origin: OriginFor<T>,
-			_name: H256,
-			_data: RequestBytes,
-			_nonce: u128,
-		) -> DispatchResult {
-			ensure_signed(origin)?;
-
-			let mut price_feeds = Vec::new();
-			let mut accounts = Vec::new();
-			let mut trading_pair_bytes = Vec::new();
-			PriceFeeds::<T>::iter().for_each(|(account, trading_pair, price_quote)| {
-				accounts.push(account);
-				trading_pair_bytes.push(trading_pair);
-				price_feeds.push(price_quote);
-			});
-		Ok(())
-		}	
+		
+			
 
 
 
@@ -118,16 +109,56 @@ pub mod pallet {
 			if resp.contract_id != name {
 				return Err(Error::<T>::FailedToAuthenticateResponse.into());
 			}
-			// TODO: is timestamp newer?
+			
+			// let mut pricequote = BoundedVec::<PriceQuote, ConstU32<6>>::default();
+			// pricequote.try_push({{PriceQuote {
+			// 	contract_id: resp.contract_id,
+			// 	price: resp.price,
+			// 	timestamp_ms: resp.timestamp_ms,
+			// }}});
+			let mut pricequotes = BoundedVec::<PriceQuote, ConstU32<6>>::default();
+			let storage_map = PriceFeeds::<T>::iter().collect::<Vec<_>>(); 
+			
+			for (i, j , mut k) in storage_map{
+				// if j == resp.pair {
+                    
+					k.try_push({PriceQuote {
+							contract_id: resp.contract_id,
+							price: resp.price,
+							timestamp_ms: resp.timestamp_ms,
+						}});
+					pricequotes = k.clone();	
+				// }
+			}	
+			
+			
+			
 			PriceFeeds::<T>::insert(
 				&resp.owner,
 				&resp.pair,
-				PriceQuote {
-					contract_id: resp.contract_id,
-					price: resp.price,
-					timestamp_ms: resp.timestamp_ms,
-				},
+				&pricequotes,
 			);
+
+			
+			// let storage_map = PriceFeeds::<T>::iter().collect::<Vec<_>>(); 
+			// let len = iter.len();
+			// let iter_ = iter.into_iter().clone();
+			// let average = iter_.fold(0, |acc, (_, _, quote)| acc + quote.price) / len as u128;
+			
+			// let sum: u128 = storage_map.iter().map(|(_, quotes)| {
+			// 	quotes.iter()
+			// 	.map(|quote| u128::from(quote.price))
+			// 	.sum::<u128>()
+			// }).sum::<u128>();
+			// let average = sum / (storage_map.len() as u128);
+			// let pricequote = PriceQuote {
+			// 	contract_id: resp.contract_id,
+			// 	price: average,
+			// 	timestamp_ms: resp.timestamp_ms,
+			// };
+			
+			// Average::<T>::drain();
+			// Average::<T>::insert(&TradingPairBytes::from(resp.pair), pricequote);
 			Self::deposit_event(Event::QuoteReceived {
 				contract: name,
 				submitter,

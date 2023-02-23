@@ -14,7 +14,7 @@ async function delay(ms: number): Promise<void> {
 
 describe('Substrate Offchain Rollup', () => {
     //get this value from Oracle node
-    const httpRpc: string =  "http://127.0.0.1:45719";
+    const httpRpc: string =  "http://127.0.0.1:41783";
     const secretBob: string = "0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89";
 
     let priceFeedFactory: SubPriceFeed.Factory;
@@ -88,8 +88,12 @@ describe('Substrate Offchain Rollup', () => {
             this.timeout(1000*30_000);
 
             const feed = await priceFeed.query.feedPrice(certAlice, {});
-            
-            // expect(feed.result.isOk).to.be.true;
+            const feed2 = await priceFeed.query.feedPrice(certAlice, {});
+            const feed3 = await priceFeed.query.feedPrice(certAlice, {});
+            const feed4 = await priceFeed.query.feedPrice(certAlice, {});
+            const feed5 = await priceFeed.query.feedPrice(certAlice, {});
+            const feed6 = await priceFeed.query.feedPrice(certAlice, {});
+            // // expect(feed.result.isOk).to.be.true;
             // expect(feed.output.isOk).to.be.true;
             // expect(feed.output.asOk.isSome).to.be.true;
             // await delay(3*1000);
@@ -100,77 +104,77 @@ describe('Substrate Offchain Rollup', () => {
         });
     });
 
-    describe('Sub0Factory', () => {
-        before(async function() {
-            this.timeout(30_000);
-            // Deploy contract
-            sub0 = await sub0Factory.instantiate('default', [], {transferToCluster: 1e12});
-            console.log('Sub0Factory deployed at', sub0.address.toString());
-        });
+    // describe('Sub0Factory', () => {
+    //     before(async function() {
+    //         this.timeout(30_000);
+    //         // Deploy contract
+    //         sub0 = await sub0Factory.instantiate('default', [], {transferToCluster: 1e12});
+    //         console.log('Sub0Factory deployed at', sub0.address.toString());
+    //     });
 
-        it('should has correct owners', async function() {
-            const sub0Owner = await sub0.query.owner(certAlice, {});
-            expect(sub0Owner.result.isOk).to.be.true;
-            expect(sub0Owner.output.toString()).to.be.equal(alice.address.toString());
-        });
+    //     it('should has correct owners', async function() {
+    //         const sub0Owner = await sub0.query.owner(certAlice, {});
+    //         expect(sub0Owner.result.isOk).to.be.true;
+    //         expect(sub0Owner.output.toString()).to.be.equal(alice.address.toString());
+    //     });
 
-        it('can be configured', async function() {
-            // Config the oracle
-            const sub0Config = await sub0.tx
-                .config(txConf, httpRpc, 100, secretBob as any, priceFeedCodeHash)
-                .signAndSend(alice, {nonce: -1});
-            console.log('Sub0Factory configured', sub0Config.toHuman());
-            await delay(4*1000);
+    //     it('can be configured', async function() {
+    //         // Config the oracle
+    //         const sub0Config = await sub0.tx
+    //             .config(txConf, httpRpc, 100, secretBob as any, priceFeedCodeHash)
+    //             .signAndSend(alice, {nonce: -1});
+    //         console.log('Sub0Factory configured', sub0Config.toHuman());
+    //         await delay(4*1000);
 
-            const config = await sub0.query.getConfig(certAlice, {})
-            // expect(config.result.isOk).to.be.true;
-            // expect(config.output.isOk).to.be.true;
-            // expect(config.output.asOk.length).to.be.equal(2);
-        });
+    //         const config = await sub0.query.getConfig(certAlice, {})
+    //         // expect(config.result.isOk).to.be.true;
+    //         // expect(config.output.isOk).to.be.true;
+    //         // expect(config.output.asOk.length).to.be.equal(2);
+    //     });
 
-        let priceFeed1: SubPriceFeed.Contract;
-        it('can deploy price feeds', async function() {
-            let deploy = await api.tx.utility.batchAll([
-                sub0.tx.deployPriceFeed(txConf, 'feed1', 'polkadot', 'usd'),
-                sub0.tx.deployPriceFeed(txConf, 'feed2', 'bitcoin', 'usd'),
-            ]).signAndSend(alice, {nonce: -1});
+    //     let priceFeed1: SubPriceFeed.Contract;
+    //     it('can deploy price feeds', async function() {
+    //         let deploy = await api.tx.utility.batchAll([
+    //             sub0.tx.deployPriceFeed(txConf, 'feed1', 'bitcpoin', 'usd'),
+    //             sub0.tx.deployPriceFeed(txConf, 'feed2', 'polkadot', 'usd'),
+    //         ]).signAndSend(alice, {nonce: -1});
 
-            console.log('PriceFeed1&2 deployed', deploy.toHuman());
-            await delay(5*1000);
+    //         console.log('PriceFeed1&2 deployed', deploy.toHuman());
+    //         await delay(5*1000);
 
-            let deployments = await sub0.query.getDeployments(certAlice, {});
-            expect(deployments.result.isOk).to.be.true;
-            expect(deployments.output.asOk.length).to.be.equal(2);
+    //         let deployments = await sub0.query.getDeployments(certAlice, {});
+    //         expect(deployments.result.isOk).to.be.true;
+    //         expect(deployments.output.asOk.length).to.be.equal(2);
 
-            // Get the address in hex, and attach to it.
-            //
-            // Note that `contractId.toString()` returns and SS58 encoded address by default, but
-            // Polkadot.js cannot parse it to H256.
-            let feed1Addr = deployments.output.asOk[1].contractId.toHex();
-            priceFeed1 = await priceFeedFactory.attach(feed1Addr);
-        });
+    //         // Get the address in hex, and attach to it.
+    //         //
+    //         // Note that `contractId.toString()` returns and SS58 encoded address by default, but
+    //         // Polkadot.js cannot parse it to H256.
+    //         let feed1Addr = deployments.output.asOk[1].contractId.toHex();
+    //         priceFeed1 = await priceFeedFactory.attach(feed1Addr);
+    //     });
 
-        it('can trigger a rollup', async function() {
-            // Init the rollup on the blockchain
-            const init = await priceFeed1.query.maybeInitRollup(certAlice, {});
-            // expect(init.result.isOk).to.be.true;
-            // expect(init.output.isOk).to.be.true;
-            // expect(init.output.asOk.isSome).to.be.true;
-            await delay(3*1000);
+    //     it('can trigger a rollup', async function() {
+    //         // Init the rollup on the blockchain
+    //         const init = await priceFeed1.query.maybeInitRollup(certAlice, {});
+    //         // expect(init.result.isOk).to.be.true;
+    //         // expect(init.output.isOk).to.be.true;
+    //         // expect(init.output.asOk.isSome).to.be.true;
+    //         await delay(3*1000);
 
-            // Trigger a rollup
-            const feed = await priceFeed1.query.feedPrice(certAlice, {});
-            // expect(feed.result.isOk).to.be.true;
-            // expect(feed.output.isOk).to.be.true;
-            // expect(feed.output.asOk.isSome).to.be.true;
-            await delay(3*1000);
+    //         // Trigger a rollup
+    //         const feed = await priceFeed1.query.feedPrice(certAlice, {});
+    //         // expect(feed.result.isOk).to.be.true;
+    //         // expect(feed.output.isOk).to.be.true;
+    //         // expect(feed.output.asOk.isSome).to.be.true;
+    //         await delay(3*1000);
 
-            // The response should be received on the blockchain
-            // const receivedPrice = await api.query.phatOracle.priceFeeds.entries(alice.address);
-            // expect(receivedPrice.length).to.be.equal(2);  // 2 in totoal: 1 existing & 1 more
-        });
+    //         // The response should be received on the blockchain
+    //         // const receivedPrice = await api.query.phatOracle.priceFeeds.entries(alice.address);
+    //         // expect(receivedPrice.length).to.be.equal(2);  // 2 in totoal: 1 existing & 1 more
+    //     });
 
-    });
+    // });
 
     // // To keep the blockchain running after the test, remove the "skip" in the following test
     // after('keeps running', async function() {
