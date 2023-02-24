@@ -123,10 +123,14 @@ pub mod pallet {
             }
 
             let mut pricequotes = BoundedVec::<PriceQuote, ConstU32<6>>::default();
+            PriceFeeds::<T>::drain();
             let mut storage_map = PriceFeeds::<T>::iter().collect::<Vec<_>>();
-
+            
             for (_i, j, mut k) in storage_map.clone() {
                 if j == resp.pair {
+                    if k.len() == 6 {
+                        k.remove(0);
+                    }  
                     k.try_push({
                         PriceQuote {
                             contract_id: resp.contract_id,
@@ -134,8 +138,9 @@ pub mod pallet {
                             timestamp_ms: resp.timestamp_ms,
                         }
                     });
-                    pricequotes = k.clone();
+                    pricequotes = k.clone();    
                 }
+
             }
 
             PriceFeeds::<T>::insert(&resp.owner, &resp.pair.clone(), &pricequotes);

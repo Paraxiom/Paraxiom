@@ -20,7 +20,10 @@ cumulus_based = true
  [[parachains.collators]]
 name = "node2"
 command = "../target/release/paraxiom"
+rpc_port = 30488
+
 
  [[parachains.collators]]
 name = "node1"
 command = "../target/release/paraxiom"
+rpc_port = 30489

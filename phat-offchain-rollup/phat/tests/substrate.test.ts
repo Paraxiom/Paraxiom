@@ -14,7 +14,7 @@ async function delay(ms: number): Promise<void> {
 
 describe('Substrate Offchain Rollup', () => {
     //get this value from Oracle node
-    const httpRpc: string =  "http://127.0.0.1:42215";
+    const httpRpc: string =  "http://127.0.0.1:46007";
     const secretBob: string = "0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89";
 
     let priceFeedFactory: SubPriceFeed.Factory;
@@ -89,15 +89,15 @@ describe('Substrate Offchain Rollup', () => {
             const feed = await priceFeed.query.feedPrice(certAlice, {});
             const feed2 = await priceFeed.query.feedPrice(certAlice, {});
             const feed3 = await priceFeed.query.feedPrice(certAlice, {});
-            const feed4 = await priceFeed.query.feedPrice(certAlice, {});
-            const feed5 = await priceFeed.query.feedPrice(certAlice, {});
-            const feed6 = await priceFeed.query.feedPrice(certAlice, {});
-            const feed7 = await priceFeed2.query.feedPrice(certAlice, {});
-            const feed8 = await priceFeed2.query.feedPrice(certAlice, {});
-            const feed9 = await priceFeed2.query.feedPrice(certAlice, {});
-            const feed10 = await priceFeed2.query.feedPrice(certAlice, {});
-            const feed11 = await priceFeed2.query.feedPrice(certAlice, {});
-            const feed12 = await priceFeed2.query.feedPrice(certAlice, {});
+            // const feed4 = await priceFeed.query.feedPrice(certAlice, {});
+            // const feed5 = await priceFeed.query.feedPrice(certAlice, {});
+            // const feed6 = await priceFeed.query.feedPrice(certAlice, {});
+            // const feed7 = await priceFeed2.query.feedPrice(certAlice, {});
+            // const feed8 = await priceFeed2.query.feedPrice(certAlice, {});
+            // const feed9 = await priceFeed2.query.feedPrice(certAlice, {});
+            // const feed10 = await priceFeed2.query.feedPrice(certAlice, {});
+            // const feed11 = await priceFeed2.query.feedPrice(certAlice, {});
+            // const feed12 = await priceFeed2.query.feedPrice(certAlice, {});
 
             // // expect(feed.result.isOk).to.be.true;
             // expect(feed.output.isOk).to.be.true;
