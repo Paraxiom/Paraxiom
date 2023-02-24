@@ -60,7 +60,13 @@ reset && yarn devphase contract test
 Running the test, you should you see activity in polkadot-js, x5.
 ![Screenshot from 2023-02-24 16-31-08](https://user-images.githubusercontent.com/6019499/221297194-90f63e18-7785-4710-8037-b4e9c457c268.png)
 Viewing the Phat Oracle chain state for price feeds, you can conclude these are all different,
-being processed at different timestamps. 
+all being processed at different timestamps.
+
+
+![Screenshot from 2023-02-24 16-19-37](https://user-images.githubusercontent.com/6019499/221298235-c23ad6f6-8046-4311-a810-8873cb300287.png)
+
+
+
 ![Screenshot from 2023-02-24 16-21-21](https://user-images.githubusercontent.com/6019499/221296456-5ad4be2b-0898-4881-81a1-14688065ec59.png)
 
 You can trigger an average for the current storage with the Phat Oracle average extrinsic.
