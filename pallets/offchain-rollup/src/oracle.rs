@@ -92,19 +92,17 @@ pub mod pallet {
         /// Sends a request to the oracle
         #[pallet::weight(0)]
         #[pallet::call_index(2)]
-        pub fn average(
-            origin: OriginFor<T>
-        ) -> DispatchResult {
-            let mut storage_map = PriceFeeds::<T>::iter().collect::<Vec<_>>();
+        pub fn average(origin: OriginFor<T>) -> DispatchResult {
+            ensure_signed(origin)?;
+            let storage_map = PriceFeeds::<T>::iter().collect::<Vec<_>>();
             let mut averages: Vec<(TradingPairBytes, u128)> = Vec::new();
-            
-            storage_map.iter()
-                .for_each(|(_i, _j, k)| {
-                    let mut sum: u128 = k.iter().map(|j| j.price).sum::<u128>();
-                    let count = k.len() as u128;
-                    let average = sum / count;
-                    averages.push((TradingPairBytes::from(_j.clone()), average));
-                });
+
+            storage_map.iter().for_each(|(_i, _j, k)| {
+                let sum: u128 = k.iter().map(|j| j.price).sum::<u128>();
+                let count = k.len() as u128;
+                let average = sum / count;
+                averages.push((TradingPairBytes::from(_j.clone()), average));
+            });
 
             for (pair, average) in averages {
                 Averages::<T>::insert(&pair, average);
@@ -112,7 +110,6 @@ pub mod pallet {
             Ok(())
         }
     }
-    
 
     impl<T: Config> crate::anchor::OnResponse<T::AccountId> for Pallet<T> {
         fn on_response(name: H256, submitter: T::AccountId, data: Vec<u8>) -> DispatchResult {
@@ -122,30 +119,44 @@ pub mod pallet {
                 return Err(Error::<T>::FailedToAuthenticateResponse.into());
             }
 
+            // let mut pricequotes = BoundedVec::<PriceQuote, ConstU32<6>>::default();
+            // let mut storage_map = PriceFeeds::<T>::drain().collect::<Vec<_>>();
+
+            // for (_i, j, mut k) in storage_map.clone() {
+            //     if j == resp.pair {
+            //         k.try_push({
+            //             PriceQuote {
+            //                 contract_id: resp.contract_id,
+            //                 price: resp.price,
+            //                 timestamp_ms: resp.timestamp_ms,
+            //             }
+            //         });
+            //         pricequotes = k.clone();
+
+            //     }
+            // }
+            // PriceFeeds::<T>::insert(&resp.owner, &resp.pair.clone(), &pricequotes);
+
+            let storage_map = PriceFeeds::<T>::drain().collect::<Vec<_>>();
             let mut pricequotes = BoundedVec::<PriceQuote, ConstU32<6>>::default();
-            PriceFeeds::<T>::drain();
-            let mut storage_map = PriceFeeds::<T>::iter().collect::<Vec<_>>();
-            
-            for (_i, j, mut k) in storage_map.clone() {
+
+            for (_i, j, mut k) in storage_map {
                 if j == resp.pair {
-                    if k.len() == 6 {
-                        k.remove(0);
-                    }  
-                    k.try_push({
-                        PriceQuote {
-                            contract_id: resp.contract_id,
-                            price: resp.price,
-                            timestamp_ms: resp.timestamp_ms,
+                        if k.len() == 6 {
+                            k.drain(..6);
                         }
-                    });
-                    pricequotes = k.clone();    
+                        k.try_push({
+                            PriceQuote {
+                                contract_id: resp.contract_id,
+                                price: resp.price,
+                                timestamp_ms: resp.timestamp_ms,
+                            }
+                        });
+                        pricequotes = k;
                 }
-
             }
-
             PriceFeeds::<T>::insert(&resp.owner, &resp.pair.clone(), &pricequotes);
 
-            
             Self::deposit_event(Event::QuoteReceived {
                 contract: name,
                 submitter,
@@ -156,6 +167,44 @@ pub mod pallet {
             Ok(())
         }
     }
+
+    // impl<T: Config> crate::anchor::OnResponse<T::AccountId> for Pallet<T> {
+    //     fn on_response(name: H256, submitter: T::AccountId, data: Vec<u8>) -> DispatchResult {
+    //         let resp: ResponseRecord =
+    //             Decode::decode(&mut &data[..]).or(Err(Error::<T>::FailedToDecodeResponse))?;
+    //         if resp.contract_id != name {
+    //             return Err(Error::<T>::FailedToAuthenticateResponse.into());
+    //         }
+
+    //         let mut pricequotes = BoundedVec::<PriceQuote, ConstU32<6>>::default();
+    //         let mut storage_map = PriceFeeds::<T>::drain().collect::<Vec<_>>();
+
+    //         for (_i, j, mut k) in storage_map.clone() {
+    //             if j == resp.pair {
+    //                 k.try_push({
+    //                     PriceQuote {
+    //                         contract_id: resp.contract_id,
+    //                         price: resp.price,
+    //                         timestamp_ms: resp.timestamp_ms,
+    //                     }
+    //                 });
+    //                 pricequotes = k.clone();
+
+    //             }
+
+    //         }
+    //         PriceFeeds::<T>::insert(&resp.owner, &resp.pair.clone(), &pricequotes);
+
+    //         Self::deposit_event(Event::QuoteReceived {
+    //             contract: name,
+    //             submitter,
+    //             owner: resp.owner,
+    //             pair: resp.pair,
+    //             price: resp.price,
+    //         });
+    //         Ok(())
+    //     }
+    // }
 
     // Structures
 

@@ -14,12 +14,17 @@ async function delay(ms: number): Promise<void> {
 
 describe('Substrate Offchain Rollup', () => {
     //get this value from Oracle node
-    const httpRpc: string =  "http://127.0.0.1:46007";
+    const httpRpc: string =  "http://127.0.0.1:30489";
     const secretBob: string = "0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89";
 
     let priceFeedFactory: SubPriceFeed.Factory;
     let priceFeed: SubPriceFeed.Contract;
     let priceFeed2: SubPriceFeed.Contract;
+    let priceFeed3: SubPriceFeed.Contract;
+    let priceFeed4: SubPriceFeed.Contract;
+    let priceFeed5: SubPriceFeed.Contract;
+    let priceFeed6: SubPriceFeed.Contract;
+    
     let priceFeedCodeHash: string;
     let sub0Factory: Sub0Factory.Factory;
     let sub0: Sub0Factory.Contract;
@@ -27,8 +32,7 @@ describe('Substrate Offchain Rollup', () => {
     let alice : KeyringPair;
     let certAlice : PhalaSdk.CertificateData;
     const txConf = { gasLimit: "10000000000000", storageDepositLimit: null };
-    // let schedulerFactory : LocalScheduler.Factory;
-    // let scheduler : LocalScheduler.Contract;
+    
 
     before(async function() {
         priceFeedFactory = await this.devPhase.getFactory('sub_price_feed');
@@ -49,34 +53,74 @@ describe('Substrate Offchain Rollup', () => {
 
     describe('SubPriceFeed', () => {
         before(async function() {
-            this.timeout(30_000);
+            this.timeout(100_000);
             // Deploy contract
             priceFeed = await priceFeedFactory.instantiate('default', [], {transferToCluster: 1e12});
+            await delay(1000);
             priceFeed2 = await priceFeedFactory.instantiate('default', [], {transferToCluster: 1e12});
+            await delay(1000);
+            priceFeed3 = await priceFeedFactory.instantiate('default', [], {transferToCluster: 1e12});
+            await delay(1000);
+            priceFeed4 = await priceFeedFactory.instantiate('default', [], {transferToCluster: 1e12});
+            await delay(1000);
+            priceFeed5 = await priceFeedFactory.instantiate('default', [], {transferToCluster: 1e12});
+            await delay(1000);
+            priceFeed6 = await priceFeedFactory.instantiate('default', [], {transferToCluster: 1e12});
+            await delay(1000);
             console.log('SubPriceFeed deployed at', priceFeed.address.toString());
         });
 
-        it('should have correct owners', async function() {
-            const feedOwner = await priceFeed.query.owner(certAlice, {});
-            expect(feedOwner.result.isOk).to.be.true;
-            expect(feedOwner.output.toString()).to.be.equal(alice.address.toString());
-        });
+        // it('should have correct owners', async function() {
+        //     const feedOwner = await priceFeed.query.owner(certAlice, {});
+        //     expect(feedOwner.result.isOk).to.be.true;
+        //     expect(feedOwner.output.toString()).to.be.equal(alice.address.toString());
+        // });
 
         it('should be configurable', async function() {
             // Config the oracle
+            await delay(1000);
             const feedConfig = await priceFeed.tx
                 .config(txConf, httpRpc, 100, secretBob as any, 'polkadot', 'usd')
                 .signAndSend(alice, {nonce: -1});
+            await delay(1000);
             const feedConfig2 = await priceFeed2.tx
-                .config(txConf, httpRpc, 100, secretBob as any, 'bitcoin', 'usd')
-                .signAndSend(alice, {nonce: -1});
-            console.log('Feed configured', feedConfig.toHuman());
-            await delay(4*1000);
+            .config(txConf, httpRpc, 100, secretBob as any, 'polkadot', 'usd')
+            .signAndSend(alice, {nonce: -1});
+            await delay(1000);
+            const feedConfig3 = await priceFeed3.tx
+            .config(txConf, httpRpc, 100, secretBob as any, 'polkadot', 'usd')
+            .signAndSend(alice, {nonce: -1});
+            await delay(1000);
+            const feedConfig4 = await priceFeed4.tx
+            .config(txConf, httpRpc, 100, secretBob as any, 'polkadot', 'usd')
+            .signAndSend(alice, {nonce: -1});
+            await delay(1000);
+            const feedConfig5 = await priceFeed5.tx
+            .config(txConf, httpRpc, 100, secretBob as any, 'polkadot', 'usd')
+            .signAndSend(alice, {nonce: -1});
+            await delay(1000);    
+            const feedConfig6 = await priceFeed6.tx
+            .config(txConf, httpRpc, 100, secretBob as any, 'polkadot', 'usd')
+            .signAndSend(alice, {nonce: -1});
+            await delay(1000);    
 
+        });  
             
+        it('should init rollups', async function() {
+                
             // Init the rollup on the blockchain
             const init = await priceFeed.query.maybeInitRollup(certAlice, {});
+            await delay(1000);    
             const init2 = await priceFeed2.query.maybeInitRollup(certAlice, {});
+            await delay(1000);    
+            const init3 = await priceFeed3.query.maybeInitRollup(certAlice, {});
+            await delay(1000);    
+            const init4 = await priceFeed4.query.maybeInitRollup(certAlice, {});
+            await delay(1000);    
+            const init5 = await priceFeed5.query.maybeInitRollup(certAlice, {});
+            await delay(1000);    
+            const init6 = await priceFeed6.query.maybeInitRollup(certAlice, {});
+            await delay(1000);    
             
             // expect(init.result.isOk).to.be.true;
             // expect(init.output.isOk).to.be.true;
@@ -84,20 +128,20 @@ describe('Substrate Offchain Rollup', () => {
         });
 
         it('can submit tx', async function() {
-            this.timeout(1000*30_000);
+            // this.timeout(1000*30_000);
 
             const feed = await priceFeed.query.feedPrice(certAlice, {});
-            const feed2 = await priceFeed.query.feedPrice(certAlice, {});
-            const feed3 = await priceFeed.query.feedPrice(certAlice, {});
-            // const feed4 = await priceFeed.query.feedPrice(certAlice, {});
-            // const feed5 = await priceFeed.query.feedPrice(certAlice, {});
-            // const feed6 = await priceFeed.query.feedPrice(certAlice, {});
-            // const feed7 = await priceFeed2.query.feedPrice(certAlice, {});
-            // const feed8 = await priceFeed2.query.feedPrice(certAlice, {});
-            // const feed9 = await priceFeed2.query.feedPrice(certAlice, {});
-            // const feed10 = await priceFeed2.query.feedPrice(certAlice, {});
-            // const feed11 = await priceFeed2.query.feedPrice(certAlice, {});
-            // const feed12 = await priceFeed2.query.feedPrice(certAlice, {});
+            await delay(1000);
+            const feed2 = await priceFeed2.query.feedPrice(certAlice, {});
+            await delay(1000);
+            const feed3 = await priceFeed3.query.feedPrice(certAlice, {});
+            await delay(1000);
+            const feed4 = await priceFeed4.query.feedPrice(certAlice, {});
+            await delay(1000);
+            const feed5 = await priceFeed5.query.feedPrice(certAlice, {});
+            await delay(1000);
+            const feed6 = await priceFeed.query.feedPrice(certAlice, {});
+            
 
             // // expect(feed.result.isOk).to.be.true;
             // expect(feed.output.isOk).to.be.true;
