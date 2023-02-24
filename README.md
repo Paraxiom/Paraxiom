@@ -50,12 +50,6 @@ make install
 ```
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
 ```
-##### Change httpRPC value: according to your OracleChain
-![Screenshot from 2023-02-16 13-58-41](https://user-images.githubusercontent.com/6019499/219461615-4119e3da-77a4-49da-a838-bb69a8371afb.png)
-https://github.com/Paraxiom/Paraxiom/blob/40a609f5b3d15c2bbba12f6820337a54f47c4b88/phat-offchain-rollup/phat/tests/substrate.test.ts#L17
-
-
-
 
 ##### Run rollups test
 ```
@@ -63,8 +57,14 @@ cd ~/phat-offchain-rollup/phat
 
 reset && yarn devphase contract test
 ```
-You should you see output on the oracle parachain.
+Running the test, you should you see activity in polkadot-js, x5.
+![Screenshot from 2023-02-24 16-31-08](https://user-images.githubusercontent.com/6019499/221297194-90f63e18-7785-4710-8037-b4e9c457c268.png)
+Viewing the Phat Oracle chain state for price feeds, you can conclude these are all different,
+being processed at different timestamps. 
+![Screenshot from 2023-02-24 16-21-21](https://user-images.githubusercontent.com/6019499/221296456-5ad4be2b-0898-4881-81a1-14688065ec59.png)
 
-![Screenshot from 2023-02-16 11-24-43](https://user-images.githubusercontent.com/6019499/219456659-92e82249-ca82-4139-bc35-d63fe0331cec.png)
+You can trigger an average for the current storage with the Phat Oracle average extrinsic.
+![Screenshot from 2023-02-16 11-2![Screenshot from 2023-02-24 16-21-21](https://user-images.githubusercontent.com/6019499/221296327-6d8e3336-9b28-44f6-b07d-5b1950e36c75.png)
+4-43](https://user-images.githubusercontent.com/6019499/219456659-92e82249-ca82-4139-bc35-d63fe0331cec.png)
 
 
