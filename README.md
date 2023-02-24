@@ -65,12 +65,14 @@ all being processed at different timestamps.
 
 ![Screenshot from 2023-02-24 16-19-37](https://user-images.githubusercontent.com/6019499/221298235-c23ad6f6-8046-4311-a810-8873cb300287.png)
 
+You can trigger an average for the current storage with the Phat Oracle average extrinsic.
+![Screenshot from 2023-02-24 16-31-08](https://user-images.githubusercontent.com/6019499/221298614-eafe73b7-779a-4c45-8614-de22a88ba84e.png)
 
+You can then subsequently view this average with the chain state for Phat Oracle averages. 
 
 ![Screenshot from 2023-02-24 16-21-21](https://user-images.githubusercontent.com/6019499/221296456-5ad4be2b-0898-4881-81a1-14688065ec59.png)
 
-You can trigger an average for the current storage with the Phat Oracle average extrinsic.
-![Screenshot from 2023-02-16 11-2![Screenshot from 2023-02-24 16-21-21](https://user-images.githubusercontent.com/6019499/221296327-6d8e3336-9b28-44f6-b07d-5b1950e36c75.png)
-4-43](https://user-images.githubusercontent.com/6019499/219456659-92e82249-ca82-4139-bc35-d63fe0331cec.png)
+
+
 
 
