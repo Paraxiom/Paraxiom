@@ -55,6 +55,8 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
 ```
 cd ~/phat-offchain-rollup/phat
 
+yarn install
+
 reset && yarn devphase contract test
 ```
 Running the test, you should you see activity in polkadot-js, x5.
