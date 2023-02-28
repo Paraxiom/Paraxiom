@@ -41,6 +41,7 @@ pub mod pallet {
 	pub struct ApiFeed<BlockNumber> {
 		requested_block_number: BlockNumber,
 		url: Option<RegStrT>,
+		vpath: Option<RegStrT>,
 	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -124,6 +125,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             key: RegStrT,
             url: RegStrT,
+			vpath: RegStrT,
         ) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -131,6 +133,7 @@ pub mod pallet {
 			let feed = ApiFeed {
 					requested_block_number: block_number,
 					url: Some(url),
+					vpath: Some(vpath),
 				};
 			ApiFeeds::<T>::insert(&who, &key, feed.clone());
 
