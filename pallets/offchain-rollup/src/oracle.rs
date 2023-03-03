@@ -142,17 +142,17 @@ pub mod pallet {
 
             for (_i, j, mut k) in storage_map {
                 if j == resp.pair {
-                        if k.len() == 6 {
-                            k.drain(..6);
+                    if k.len() == 6 {
+                        k.drain(..6);
+                    }
+                    k.try_push({
+                        PriceQuote {
+                            contract_id: resp.contract_id,
+                            price: resp.price,
+                            timestamp_ms: resp.timestamp_ms,
                         }
-                        k.try_push({
-                            PriceQuote {
-                                contract_id: resp.contract_id,
-                                price: resp.price,
-                                timestamp_ms: resp.timestamp_ms,
-                            }
-                        });
-                        pricequotes = k;
+                    });
+                    pricequotes = k;
                 }
             }
             PriceFeeds::<T>::insert(&resp.owner, &resp.pair.clone(), &pricequotes);

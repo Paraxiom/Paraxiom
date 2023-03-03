@@ -62,6 +62,16 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.37" }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.37" }
 
+# Contracts specific packages
+pallet-contracts = { git = "https://github.com/paritytech/substrate", package = "pallet-contracts", default-features = false, branch = "polkadot-v0.9.37" }
+pallet-contracts-primitives = { git = "https://github.com/paritytech/substrate", package = "pallet-contracts-primitives", default-features = false, branch = "polkadot-v0.9.37" }
+pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate",  default-features = false, branch = "polkadot-v0.9.37" }
+pallet-assets ={ git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.37" }
+
+
+
+
+
 # Cumulus
 cumulus-pallet-aura-ext = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.37" }
 cumulus-pallet-dmp-queue = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.37" }
@@ -74,13 +84,19 @@ cumulus-primitives-timestamp = { git = "https://github.com/paritytech/cumulus", 
 cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.37" }
 pallet-collator-selection = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.37" }
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.37" }
-
+pallet-assets-chain-extension = { git = "https://github.com/727-Ventures/pallet-assets-chain-extension", default-features = false, features = ["substrate"], branch = "polkadot-v0.9.37"  }
 
 [features]
 default = [
 	"std",
 ]
+
 std = [
+	"pallet-assets-chain-extension/std",
+	"pallet-randomness-collective-flip/std",
+	"pallet-assets/std",
+	"pallet-contracts/std",
+	"pallet-contracts-primitives/std",
 	"codec/std",
 	"log/std",
 	"scale-info/std",
