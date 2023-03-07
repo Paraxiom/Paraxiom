@@ -26,6 +26,8 @@ as a mechanism for securing reporter data.
 ```
 cargo build --release
 ```
+##### Install polkadot in ~/ directory in ~/ directory
+##### Install Paraxiom node or consumer
 ##### Run relay and parachain 
 ##### Get your zombienet on:
 https://github.com/paritytech/zombienet/releases
