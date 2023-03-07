@@ -21,14 +21,14 @@ as a mechanism for securing reporter data.
 ### running instructions:
 ##### *** this is MVP work, please forgive the imbricated applications/directories. ***
 ##### *** Strongly suggested using latest ubuntu ***
-
+#### Initial boot
 ##### Build 
 ```
 cargo build --release
 ```
 ##### Install polkadot in ~/ directory in ~/ directory
 ##### Install Paraxiom node or consumer
-##### Run relay and parachain 
+#### Run relay and parachain 
 ##### Get your zombienet on:
 https://github.com/paritytech/zombienet/releases
 
@@ -53,7 +53,7 @@ make install
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
 ```
 
-##### Run rollups test
+#### Run rollups test
 ```
 cd ~/phat-offchain-rollup/phat
 
