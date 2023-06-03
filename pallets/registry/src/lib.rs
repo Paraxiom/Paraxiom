@@ -13,7 +13,6 @@ use frame_support::{
 pub use pallet::*;
 use sp_std::{borrow::ToOwned, convert::TryFrom, convert::TryInto, prelude::*, str, vec, vec::Vec};
 
-#[allow(unused)]
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
