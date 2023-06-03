@@ -20,7 +20,7 @@ jobs:
       run: sudo apt install --assume-yes build-essential git clang curl libssl-dev protobuf-compiler
     - name: Install toolchain
       run: rustup default stable && rustup update && rustup update nightly && rustup target add wasm32-unknown-unknown --toolchain nightly
-    - name: Build
-      run: cargo +nightly clippy --verbose
-    - name: Run tests
+    - name: Run clippy
+      run: cargo clippy --verbose
+    - name: Run fmt
       run: cargo +nightly fmt --verbose
