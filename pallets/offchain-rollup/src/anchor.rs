@@ -319,7 +319,7 @@ pub mod pallet {
         };
         // Pallets
         use frame_support::{assert_noop, assert_ok};
-        use kv_session::ReadTracker;
+        use pink_kv_session::ReadTracker;
 
         const NAME1: H256 = H256([1u8; 32]);
 
@@ -534,10 +534,10 @@ pub mod pallet {
 
         #[test]
         fn queue_e2e() {
-            use kv_session::traits::KvSession;
-            use kv_session::traits::KvSnapshot;
-            use kv_session::traits::QueueSession;
-            use kv_session::{Error, Result};
+            use pink_kv_session::traits::KvSession;
+            use pink_kv_session::traits::KvSnapshot;
+            use pink_kv_session::traits::QueueSession;
+            use pink_kv_session::{Error, Result};
 
             struct ChainStorage {
                 name: H256,
@@ -556,7 +556,7 @@ pub mod pallet {
                 }
             }
 
-            impl kv_session::traits::BumpVersion for ChainStorage {
+            impl pink_kv_session::traits::BumpVersion for ChainStorage {
                 fn bump_version(&self, version: Option<Vec<u8>>) -> Result<Vec<u8>> {
                     match version {
                         Some(v) => {
@@ -569,7 +569,7 @@ pub mod pallet {
             }
 
             struct ScaleCodec;
-            impl kv_session::traits::QueueIndexCodec for ScaleCodec {
+            impl pink_kv_session::traits::QueueIndexCodec for ScaleCodec {
                 fn encode(number: u32) -> Vec<u8> {
                     number.encode()
                 }
@@ -579,8 +579,8 @@ pub mod pallet {
                 }
             }
 
-            fn test_client() -> kv_session::Session<ChainStorage, ReadTracker, ScaleCodec> {
-                kv_session::Session::new(
+            fn test_client() -> pink_kv_session::Session<ChainStorage, ReadTracker, ScaleCodec> {
+                pink_kv_session::Session::new(
                     ChainStorage { name: NAME1 },
                     ReadTracker::new(),
                     b"_queue/",
@@ -589,13 +589,13 @@ pub mod pallet {
             }
 
             fn rollup_tx(
-                tx: kv_session::traits::KvTransaction,
+                tx: pink_kv_session::traits::KvTransaction,
                 kvdb: ChainStorage,
             ) -> Option<RollupTx> {
-                let tx = kv_session::rollup::rollup(
+                let tx = pink_kv_session::rollup::rollup(
                     kvdb,
                     tx,
-                    kv_session::rollup::VersionLayout::Standalone {
+                    pink_kv_session::rollup::VersionLayout::Standalone {
                         key_postfix: "_ver".into(),
                     },
                 )
