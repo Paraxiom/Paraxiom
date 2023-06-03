@@ -101,7 +101,7 @@ pub mod pallet {
                 let sum: u128 = k.iter().map(|j| j.price).sum::<u128>();
                 let count = k.len() as u128;
                 let average = sum / count;
-                averages.push((TradingPairBytes::from(_j.clone()), average));
+                averages.push((_j.clone(), average));
             });
 
             for (pair, average) in averages {
@@ -155,7 +155,7 @@ pub mod pallet {
                     pricequotes = k;
                 }
             }
-            PriceFeeds::<T>::insert(&resp.owner, &resp.pair.clone(), &pricequotes);
+            PriceFeeds::<T>::insert(&resp.owner, resp.pair.clone(), pricequotes);
 
             Self::deposit_event(Event::QuoteReceived {
                 contract: name,

@@ -593,7 +593,7 @@ pub mod pallet {
                 kvdb: ChainStorage,
             ) -> Option<RollupTx> {
                 let tx = pink_kv_session::rollup::rollup(
-                    kvdb,
+                    &kvdb,
                     tx,
                     pink_kv_session::rollup::VersionLayout::Standalone {
                         key_postfix: "_ver".into(),
