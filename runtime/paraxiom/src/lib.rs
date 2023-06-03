@@ -18,7 +18,7 @@ pub use frame_support::{
     StorageValue,
 };
 const fn deposit(items: u32, bytes: u32) -> Balance {
-	(items as Balance * UNIT + (bytes as Balance) * (5 * MILLIUNIT / 100)) / 10
+    (items as Balance * UNIT + (bytes as Balance) * (5 * MILLIUNIT / 100)) / 10
 }
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use smallvec::smallvec;
@@ -245,7 +245,6 @@ pub const MILLICENTS: Balance = 1_000_000_000;
 pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
 pub const DOLLARS: Balance = 100 * CENTS;
 
-
 parameter_types! {
     pub const AssetDeposit: Balance = 100 * DOLLARS;
     pub const ApprovalDeposit: Balance = DOLLARS;
@@ -255,26 +254,25 @@ parameter_types! {
 }
 
 impl pallet_assets::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = u128;
-	type AssetId = u32;
-	type AssetIdParameter = codec::Compact<u32>;
-	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
-	type Currency = Balances;
-	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
-	type AssetDeposit = AssetDeposit;
-	type AssetAccountDeposit = ConstU128<DOLLARS>;
-	type MetadataDepositBase = MetadataDepositBase;
-	type MetadataDepositPerByte = MetadataDepositPerByte;
-	type ApprovalDeposit = ApprovalDeposit;
-	type StringLimit = StringLimit;
-	type Freezer = ();
-	type Extra = ();
-	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
-	type RemoveItemsLimit = ConstU32<1000>;
-	type CallbackHandle = ();
+    type RuntimeEvent = RuntimeEvent;
+    type Balance = u128;
+    type AssetId = u32;
+    type AssetIdParameter = codec::Compact<u32>;
+    type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+    type Currency = Balances;
+    type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+    type AssetDeposit = AssetDeposit;
+    type AssetAccountDeposit = ConstU128<DOLLARS>;
+    type MetadataDepositBase = MetadataDepositBase;
+    type MetadataDepositPerByte = MetadataDepositPerByte;
+    type ApprovalDeposit = ApprovalDeposit;
+    type StringLimit = StringLimit;
+    type Freezer = ();
+    type Extra = ();
+    type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+    type RemoveItemsLimit = ConstU32<1000>;
+    type CallbackHandle = ();
 }
-
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
@@ -283,52 +281,49 @@ parameter_types! {
     pub const DepositPerByte: Balance = deposit(0, 1);
     pub const DeletionQueueDepth: u32 = 128;
     pub DeletionWeightLimit: Weight = RuntimeBlockWeights::get()
-    	.per_class
-    	.get(DispatchClass::Normal)
-    	.max_total
-    	.unwrap_or(RuntimeBlockWeights::get().max_block);
+        .per_class
+        .get(DispatchClass::Normal)
+        .max_total
+        .unwrap_or(RuntimeBlockWeights::get().max_block);
     pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
 }
 
 impl pallet_contracts::Config for Runtime {
-	type Time = Timestamp;
-	type Randomness = RandomnessCollectiveFlip;
-	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-	/// The safest default is to allow no calls at all.
-	///
-	/// Runtimes should whitelist dispatchables that are allowed to be called from contracts
-	/// and make sure they are stable. Dispatchables exposed to contracts are not allowed to
-	/// change because that would break already deployed contracts. The `RuntimeCall` structure
-	/// itself is not allowed to change the indices of existing pallets, too.
-	type CallFilter = frame_support::traits::Nothing;
-	type DepositPerItem = DepositPerItem;
-	type DepositPerByte = DepositPerByte;
-	type CallStack = [pallet_contracts::Frame<Self>; 31];
-	type WeightPrice = pallet_transaction_payment::Pallet<Self>;
-	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
-	type ChainExtension = pallet_assets_chain_extension::substrate::AssetsExtension;
-	type DeletionQueueDepth = DeletionQueueDepth;
-	type DeletionWeightLimit = DeletionWeightLimit;
-	type Schedule = Schedule;
-	type AddressGenerator = pallet_contracts::DefaultAddressGenerator;
-	// This node is geared towards development and testing of contracts.
-	// We decided to increase the default allowed contract size for this
-	// reason (the default is `128 * 1024`).
-	//
-	// Our reasoning is that the error code `CodeTooLarge` is thrown
-	// if a too-large contract is uploaded. We noticed that it poses
-	// less friction during development when the requirement here is
-	// just more lax.
-	type MaxCodeLen = ConstU32<{ 256 * 1024 }>;
-	type MaxStorageKeyLen = ConstU32<128>;
-	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
-	type UnsafeUnstableInterface = ConstBool<true>;
+    type Time = Timestamp;
+    type Randomness = RandomnessCollectiveFlip;
+    type Currency = Balances;
+    type RuntimeEvent = RuntimeEvent;
+    type RuntimeCall = RuntimeCall;
+    /// The safest default is to allow no calls at all.
+    ///
+    /// Runtimes should whitelist dispatchables that are allowed to be called from contracts
+    /// and make sure they are stable. Dispatchables exposed to contracts are not allowed to
+    /// change because that would break already deployed contracts. The `RuntimeCall` structure
+    /// itself is not allowed to change the indices of existing pallets, too.
+    type CallFilter = frame_support::traits::Nothing;
+    type DepositPerItem = DepositPerItem;
+    type DepositPerByte = DepositPerByte;
+    type CallStack = [pallet_contracts::Frame<Self>; 31];
+    type WeightPrice = pallet_transaction_payment::Pallet<Self>;
+    type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
+    type ChainExtension = pallet_assets_chain_extension::substrate::AssetsExtension;
+    type DeletionQueueDepth = DeletionQueueDepth;
+    type DeletionWeightLimit = DeletionWeightLimit;
+    type Schedule = Schedule;
+    type AddressGenerator = pallet_contracts::DefaultAddressGenerator;
+    // This node is geared towards development and testing of contracts.
+    // We decided to increase the default allowed contract size for this
+    // reason (the default is `128 * 1024`).
+    //
+    // Our reasoning is that the error code `CodeTooLarge` is thrown
+    // if a too-large contract is uploaded. We noticed that it poses
+    // less friction during development when the requirement here is
+    // just more lax.
+    type MaxCodeLen = ConstU32<{ 256 * 1024 }>;
+    type MaxStorageKeyLen = ConstU32<128>;
+    type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
+    type UnsafeUnstableInterface = ConstBool<true>;
 }
-
-
-
 
 parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
@@ -605,14 +600,14 @@ construct_runtime!(
         PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
         CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
         DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
-        
+
         // Registry
         RegistryPallet: pallet_registry::{Pallet, Call, Storage, Event<T>}  = 40,
         RandomnessCollectiveFlip: pallet_randomness_collective_flip = 50,
-        
+
         Contracts: pallet_contracts = 51,
         Assets: pallet_assets = 52,
-        
+
         // Oracle Pallets
         // OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 41,
         // ParaOraclePallet: para_oracle = 42,
@@ -641,69 +636,69 @@ mod benches {
 
 impl_runtime_apis! {
     impl pallet_contracts::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash>
-		for Runtime
-	{
-		fn call(
-			origin: AccountId,
-			dest: AccountId,
-			value: Balance,
-			gas_limit: Option<Weight>,
-			storage_deposit_limit: Option<Balance>,
-			input_data: Vec<u8>,
-		) -> pallet_contracts_primitives::ContractExecResult<Balance> {
-			let gas_limit = gas_limit.unwrap_or(RuntimeBlockWeights::get().max_block);
-			Contracts::bare_call(
-				origin,
-				dest,
-				value,
-				gas_limit,
-				storage_deposit_limit,
-				input_data,
-				CONTRACTS_DEBUG_OUTPUT,
-				pallet_contracts::Determinism::Deterministic,
-			)
-		}
+        for Runtime
+    {
+        fn call(
+            origin: AccountId,
+            dest: AccountId,
+            value: Balance,
+            gas_limit: Option<Weight>,
+            storage_deposit_limit: Option<Balance>,
+            input_data: Vec<u8>,
+        ) -> pallet_contracts_primitives::ContractExecResult<Balance> {
+            let gas_limit = gas_limit.unwrap_or(RuntimeBlockWeights::get().max_block);
+            Contracts::bare_call(
+                origin,
+                dest,
+                value,
+                gas_limit,
+                storage_deposit_limit,
+                input_data,
+                CONTRACTS_DEBUG_OUTPUT,
+                pallet_contracts::Determinism::Deterministic,
+            )
+        }
 
-		fn instantiate(
-			origin: AccountId,
-			value: Balance,
-			gas_limit: Option<Weight>,
-			storage_deposit_limit: Option<Balance>,
-			code: pallet_contracts_primitives::Code<Hash>,
-			data: Vec<u8>,
-			salt: Vec<u8>,
-		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, Balance>
-		{
-			let gas_limit = gas_limit.unwrap_or(RuntimeBlockWeights::get().max_block);
-			Contracts::bare_instantiate(
-				origin,
-				value,
-				gas_limit,
-				storage_deposit_limit,
-				code,
-				data,
-				salt,
-				CONTRACTS_DEBUG_OUTPUT
-			)
-		}
+        fn instantiate(
+            origin: AccountId,
+            value: Balance,
+            gas_limit: Option<Weight>,
+            storage_deposit_limit: Option<Balance>,
+            code: pallet_contracts_primitives::Code<Hash>,
+            data: Vec<u8>,
+            salt: Vec<u8>,
+        ) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, Balance>
+        {
+            let gas_limit = gas_limit.unwrap_or(RuntimeBlockWeights::get().max_block);
+            Contracts::bare_instantiate(
+                origin,
+                value,
+                gas_limit,
+                storage_deposit_limit,
+                code,
+                data,
+                salt,
+                CONTRACTS_DEBUG_OUTPUT
+            )
+        }
 
-		fn upload_code(
-			origin: AccountId,
-			code: Vec<u8>,
-			storage_deposit_limit: Option<Balance>,
-			determinism: pallet_contracts::Determinism,
-		) -> pallet_contracts_primitives::CodeUploadResult<Hash, Balance>
-		{
-			Contracts::bare_upload_code(origin, code, storage_deposit_limit, determinism)
-		}
+        fn upload_code(
+            origin: AccountId,
+            code: Vec<u8>,
+            storage_deposit_limit: Option<Balance>,
+            determinism: pallet_contracts::Determinism,
+        ) -> pallet_contracts_primitives::CodeUploadResult<Hash, Balance>
+        {
+            Contracts::bare_upload_code(origin, code, storage_deposit_limit, determinism)
+        }
 
-		fn get_storage(
-			address: AccountId,
-			key: Vec<u8>,
-		) -> pallet_contracts_primitives::GetStorageResult {
-			Contracts::get_storage(address, key)
-		}
-	}
+        fn get_storage(
+            address: AccountId,
+            key: Vec<u8>,
+        ) -> pallet_contracts_primitives::GetStorageResult {
+            Contracts::get_storage(address, key)
+        }
+    }
     impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
         fn slot_duration() -> sp_consensus_aura::SlotDuration {
             sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
