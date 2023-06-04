@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-and-test:
+  test:
 
     runs-on: ubuntu-latest
 
@@ -20,7 +20,5 @@ jobs:
       run: sudo apt install --assume-yes build-essential git clang curl libssl-dev protobuf-compiler
     - name: Install toolchain
       run: rustup default stable && rustup update && rustup update nightly && rustup target add wasm32-unknown-unknown --toolchain nightly
-    - name: Build
-      run: cargo +nightly build --verbose
     - name: Run tests
       run: cargo +nightly test --verbose

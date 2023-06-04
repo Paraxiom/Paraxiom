@@ -1,0 +1,24 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: sudo apt install --assume-yes build-essential git clang curl libssl-dev protobuf-compiler
+    - name: Install toolchain
+      run: rustup default stable && rustup update && rustup update nightly && rustup target add wasm32-unknown-unknown --toolchain nightly
+    - name: Build
+      run: cargo +nightly build --verbose
