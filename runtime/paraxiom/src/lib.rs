@@ -517,7 +517,7 @@ impl pallet_aura::Config for Runtime {
     type MaxAuthorities = ConstU32<100_000>;
 }
 
-const id: [u8; 8] = *b"PotStake";
+const ID: [u8; 8] = *b"PotStake";
 
 parameter_types! {
 

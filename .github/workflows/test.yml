@@ -1,4 +1,4 @@
-name: Rust
+name: Test
 
 on:
   push:
@@ -21,4 +21,4 @@ jobs:
     - name: Install toolchain
       run: rustup default stable && rustup update && rustup update nightly && rustup target add wasm32-unknown-unknown --toolchain nightly
     - name: Run tests
-      run: cargo +nightly test --verbose
+      run: cargo +nightly test
