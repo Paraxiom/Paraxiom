@@ -4,12 +4,12 @@
 //! kv-store for Phat Contract to read and write, and allows the Phat Contract to send arbitrary
 //! messages to the blockchain to trigger custom actions.
 //!
-//! Off-chain Rollup enables ACID operations on the blockchain for Phat Contracts. The kv-stroe
-//! access and the customzed actions are wrapped as Rollup Transactions. It guarantees that the
+//! Off-chain Rollup enables ACID operations on the blockchain for Phat Contracts. The kv-store
+//! access and the customized actions are wrapped as Rollup Transactions. It guarantees that the
 //! transactions are isolated and atomic. No conflicting transactions will be accepted.
 //!
-//! The anchor pallet is designed to implement such ACID machanism. It accepts the Rollup
-//! Transaction submitted by the rollup client running in Phat Contract, validates it, and aplly
+//! The anchor pallet is designed to implement such ACID mechanism. It accepts the Rollup
+//! Transaction submitted by the rollup client running in Phat Contract, validates it, and apply
 //! the changes.
 //!
 //! On the other hand, the pallet provides two features to the other pallets:
@@ -389,14 +389,14 @@ pub mod pallet {
                 assert_eq!(Anchor::states(NAME1, bvec(b"key")), None);
 
                 // Action received
-                let resposne = crate::oracle::ResponseRecord {
+                let response = crate::oracle::ResponseRecord {
                     owner: sp_runtime::AccountId32::from([0u8; 32]),
                     contract_id: NAME1,
                     pair: bvec(b"polkadot_usd"),
                     price: 5_000000000000,
                     timestamp_ms: 1000,
                 };
-                let act = Action::Reply(bvec(&resposne.encode()));
+                let act = Action::Reply(bvec(&response.encode()));
                 let _ = take_events();
                 assert_ok!(Anchor::rollup(
                     Origin::signed(1),
