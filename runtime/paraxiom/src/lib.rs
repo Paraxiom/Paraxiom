@@ -549,7 +549,7 @@ impl pallet_collator_selection::Config for Runtime {
     type WeightInfo = ();
 }
 
-/// Configure the palletin pallets/registry.
+/// Configure the registry pallet (see: /pallets/registry)
 impl pallet_registry::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 }
@@ -557,16 +557,21 @@ impl pallet_registry::Config for Runtime {
 parameter_types! {
     pub const QueuePrefix: &'static [u8] = b"_queue/";
     pub const QueueCapacity: u32 = 128;
+    pub const QuotesCount: u32 = 6;
 }
 
+/// Configure the anchor pallet (see: /pallets/offchain-rollup/anchor)
 impl pallet_anchor::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnResponse = PhatOracle;
     type QueuePrefix = QueuePrefix;
     type QueueCapacity = QueueCapacity;
 }
+
+/// Configure the oracle pallet (see: /pallets/offchain-rollup/oracle)
 impl pallet_oracle::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
+    type QuotesCount = QuotesCount;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

@@ -15,6 +15,7 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+        type QuotesCount: Get<u32>;
     }
 
     const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -24,9 +25,9 @@ pub mod pallet {
     #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
 
-    pub type TradingPairBytes = BoundedVec<u8, ConstU32<64>>;
-    pub type PriceQuotes = BoundedVec<PriceQuote, ConstU32<6>>;
-    /// Mapping from (deployer, traiding_pair) to price feed quotes
+    pub type Bytes = BoundedVec<u8, ConstU32<64>>;
+
+    /// Mapping from (deployer, trading_pair) to price feed quotes
     #[pallet::storage]
     #[pallet::getter(fn price_feeds)]
     pub type PriceFeeds<T: Config> = StorageDoubleMap<
@@ -34,13 +35,14 @@ pub mod pallet {
         Twox64Concat,
         AccountId32,
         Blake2_128Concat,
-        TradingPairBytes,
-        PriceQuotes,
+        Bytes,
+        // price quotes
+        BoundedVec<PriceQuote, T::QuotesCount>,
     >;
 
     #[pallet::storage]
     #[pallet::getter(fn averages)]
-    pub type Averages<T: Config> = StorageMap<_, Twox64Concat, TradingPairBytes, u128>;
+    pub type Averages<T: Config> = StorageMap<_, Twox64Concat, Bytes, u128>;
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -50,7 +52,7 @@ pub mod pallet {
             contract: H256,
             submitter: T::AccountId,
             owner: AccountId32,
-            pair: TradingPairBytes,
+            pair: Bytes,
             price: u128,
         },
     }
@@ -59,6 +61,7 @@ pub mod pallet {
     pub enum Error<T> {
         FailedToAuthenticateResponse,
         FailedToDecodeResponse,
+        FailedToPushResponse,
     }
 
     #[pallet::call]
@@ -70,7 +73,7 @@ pub mod pallet {
         pub fn request(
             origin: OriginFor<T>,
             _name: H256,
-            _data: RequestBytes,
+            _data: Bytes,
             _nonce: u128,
         ) -> DispatchResult {
             ensure_signed(origin)?;
@@ -83,7 +86,7 @@ pub mod pallet {
         pub fn feeds(
             origin: OriginFor<T>,
             _name: H256,
-            _data: RequestBytes,
+            _data: Bytes,
             _nonce: u128,
         ) -> DispatchResult {
             ensure_signed(origin)?;
@@ -95,7 +98,7 @@ pub mod pallet {
         pub fn average(origin: OriginFor<T>) -> DispatchResult {
             ensure_signed(origin)?;
             let storage_map = PriceFeeds::<T>::iter().collect::<Vec<_>>();
-            let mut averages: Vec<(TradingPairBytes, u128)> = Vec::new();
+            let mut averages: Vec<(Bytes, u128)> = Vec::new();
 
             storage_map.iter().for_each(|(_i, _j, k)| {
                 let sum: u128 = k.iter().map(|j| j.price).sum::<u128>();
@@ -119,31 +122,13 @@ pub mod pallet {
                 return Err(Error::<T>::FailedToAuthenticateResponse.into());
             }
 
-            // let mut pricequotes = BoundedVec::<PriceQuote, ConstU32<6>>::default();
-            // let mut storage_map = PriceFeeds::<T>::drain().collect::<Vec<_>>();
-
-            // for (_i, j, mut k) in storage_map.clone() {
-            //     if j == resp.pair {
-            //         k.try_push({
-            //             PriceQuote {
-            //                 contract_id: resp.contract_id,
-            //                 price: resp.price,
-            //                 timestamp_ms: resp.timestamp_ms,
-            //             }
-            //         });
-            //         pricequotes = k.clone();
-
-            //     }
-            // }
-            // PriceFeeds::<T>::insert(&resp.owner, &resp.pair.clone(), &pricequotes);
-
             let storage_map = PriceFeeds::<T>::drain().collect::<Vec<_>>();
-            let mut pricequotes = BoundedVec::<PriceQuote, ConstU32<6>>::default();
+            let mut pricequotes = BoundedVec::<PriceQuote, T::QuotesCount>::default();
 
             for (_i, j, mut k) in storage_map {
                 if j == resp.pair {
-                    if k.len() == 6 {
-                        k.drain(..6);
+                    if k.len() == T::QuotesCount::get() as usize {
+                        k.drain(..T::QuotesCount::get() as usize);
                     }
                     k.try_push({
                         PriceQuote {
@@ -151,7 +136,7 @@ pub mod pallet {
                             price: resp.price,
                             timestamp_ms: resp.timestamp_ms,
                         }
-                    });
+                    }).or(Err(Error::<T>::FailedToPushResponse))?;
                     pricequotes = k;
                 }
             }
@@ -206,9 +191,6 @@ pub mod pallet {
     //     }
     // }
 
-    // Structures
-
-    pub type RequestBytes = BoundedVec<u8, ConstU32<64>>;
 
     /// A quote from a price feed oracle
     #[derive(Debug, PartialEq, Eq, Encode, Decode, Clone, scale_info::TypeInfo, MaxEncodedLen)]
@@ -223,7 +205,7 @@ pub mod pallet {
     pub struct ResponseRecord {
         pub owner: AccountId32,
         pub contract_id: H256,
-        pub pair: TradingPairBytes,
+        pub pair: Bytes,
         pub price: u128,
         pub timestamp_ms: u64,
     }
