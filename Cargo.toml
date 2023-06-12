@@ -1,7 +1,6 @@
 [workspace]
 resolver = "2"
-exclude = ["contracts"]
-
+exclude = ["phat"]
 
 members = [
 	"pallets/registry",
@@ -9,7 +8,6 @@ members = [
 	"node",
 	"runtime/paraxiom",
 ]
-
 
 [profile.release]
 panic = "unwind"
