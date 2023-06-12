@@ -23,7 +23,6 @@
         }
     },
     "include": [
-        "scripts/*",
         "tests/*",
         "typings/*"
     ],
