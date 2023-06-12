@@ -146,7 +146,7 @@ impl WeightToFeePolynomial for WeightToFee {
     type Balance = Balance;
     fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
         // in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
-        // in our template, we map to 1/10 of that, or 1/10 MILLIUNIT
+        // in our oracle, we map to 1/10 of that, or 1/10 MILLIUNIT
         let p = MILLIUNIT / 10;
         let q = 100 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
         smallvec![WeightToFeeCoefficient {
@@ -552,6 +552,9 @@ impl pallet_collator_selection::Config for Runtime {
 /// Configure the registry pallet (see: /pallets/registry)
 impl pallet_registry::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
+    type MaxUrlSize = ConstU32<512>;
+    type MaxKeySize = ConstU32<128>;
+    type MaxPathSize = ConstU32<256>;
 }
 
 parameter_types! {
