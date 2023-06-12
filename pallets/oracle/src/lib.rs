@@ -2,6 +2,13 @@
 
 pub use self::pallet::*;
 
+use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
+use frame_support::{
+    traits::{ConstU128, ConstU32, ConstU64},
+    BoundedVec,
+};
+pub use pallet::*;
+use sp_std::{borrow::ToOwned, convert::TryFrom, convert::TryInto, prelude::*, str, vec, vec::Vec};
 #[frame_support::pallet]
 pub mod pallet {
     use frame_support::{
@@ -114,7 +121,7 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> crate::anchor::OnResponse<T::AccountId> for Pallet<T> {
+    impl<T: Config> phat_offchain_rollup::anchor::OnResponse<T::AccountId> for Pallet<T> {
         fn on_response(name: H256, submitter: T::AccountId, data: Vec<u8>) -> DispatchResult {
             let resp: ResponseRecord =
                 Decode::decode(&mut &data[..]).or(Err(Error::<T>::FailedToDecodeResponse))?;
