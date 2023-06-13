@@ -4,6 +4,7 @@ exclude = ["phat"]
 
 members = [
 	"pallets/registry",
+	"pallets/oracle",
 	"node",
 	"runtime/paraxiom",
 ]

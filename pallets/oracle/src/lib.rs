@@ -1,6 +1,8 @@
 //! # Sample Oracle based on Offchain Rollup
+#![cfg_attr(not(feature = "std"), no_std)]
 
 pub use self::pallet::*;
+pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -114,7 +116,7 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> crate::anchor::OnResponse<T::AccountId> for Pallet<T> {
+    impl<T: Config> phat_offchain_rollup::anchor::OnResponse<T::AccountId> for Pallet<T> {
         fn on_response(name: H256, submitter: T::AccountId, data: Vec<u8>) -> DispatchResult {
             let resp: ResponseRecord =
                 Decode::decode(&mut &data[..]).or(Err(Error::<T>::FailedToDecodeResponse))?;
