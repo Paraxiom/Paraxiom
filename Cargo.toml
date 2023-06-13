@@ -5,6 +5,7 @@ exclude = ["contracts"]
 
 members = [
 	"pallets/registry",
+	"pallets/oracle",
 	"node",
 	"runtime/paraxiom",
 ]
