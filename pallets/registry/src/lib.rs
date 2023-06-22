@@ -104,7 +104,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Checks if a feed exists and is active.
         pub fn is_active(account_id: T::AccountId, key: RegistryFeedKey<T>) -> bool {
-            if let Some(feed) = <ApiFeeds<T>>::get(&account_id, &key) {
+            if let Some(feed) = <ApiFeeds<T>>::get(&account_id, key) {
                 return feed.status == ApiFeedStatus::Active;
             }
 
