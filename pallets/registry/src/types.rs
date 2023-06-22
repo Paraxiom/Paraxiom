@@ -1,9 +1,9 @@
+use crate::Config;
 use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
 use frame_support::{
     traits::{ConstU128, ConstU32, ConstU64},
     BoundedVec,
 };
-use crate::Config;
 
 /// Types representing limited strings
 pub type RegistryFeedKey<T> = BoundedVec<u8, <T as Config>::MaxKeySize>;
