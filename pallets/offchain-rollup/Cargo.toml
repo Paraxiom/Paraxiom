@@ -34,6 +34,7 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "
 frame-support-test = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 pink-kv-session = { git = "https://github.com/phala-network/phala-blockchain", tag = "nightly-2023-03-09" }
 assert_matches = "1.4.0"
+pallet-oracle = { path = "../oracle" }
 
 [features]
 default = ["std"]

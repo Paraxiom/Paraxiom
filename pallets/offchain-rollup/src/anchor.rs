@@ -389,7 +389,7 @@ pub mod pallet {
                 assert_eq!(Anchor::states(NAME1, bvec(b"key")), None);
 
                 // Action received
-                let response = crate::oracle::ResponseRecord {
+                let response = pallet_oracle::ResponseRecord {
                     owner: sp_runtime::AccountId32::from([0u8; 32]),
                     contract_id: NAME1,
                     pair: bvec(b"polkadot_usd"),
@@ -408,10 +408,11 @@ pub mod pallet {
                     },
                     5u128
                 ));
+                dbg!(take_events());
                 assert_eq!(
                     take_events(),
                     vec![
-                        RuntimeEvent::Oracle(crate::oracle::Event::<Test>::QuoteReceived {
+                        RuntimeEvent::Oracle(pallet_oracle::Event::<Test>::QuoteReceived {
                             contract: NAME1,
                             submitter: 1,
                             owner: sp_runtime::AccountId32::from([0u8; 32]),

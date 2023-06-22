@@ -1,4 +1,6 @@
-use crate::{anchor, oracle};
+use crate::anchor;
+
+use pallet_oracle;
 
 use frame_support::{pallet_prelude::ConstU32, parameter_types};
 use frame_system as system;
@@ -25,7 +27,7 @@ frame_support::construct_runtime!(
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         // Pallets to test
         Anchor: anchor::{Pallet, Call, Storage, Event<T>},
-        Oracle: oracle::{Pallet, Call, Storage, Event<T>},
+        Oracle: pallet_oracle::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -97,13 +99,14 @@ parameter_types! {
 
 impl anchor::Config for Test {
     type RuntimeEvent = RuntimeEvent;
-    type OnResponse = Oracle;
+    type OnResponse = ();
     type QueuePrefix = QueuePrefix;
     type QueueCapacity = ConstU32<3>;
 }
 
-impl oracle::Config for Test {
+impl pallet_oracle::Config for Test {
     type RuntimeEvent = RuntimeEvent;
+    type QuotesCount = ConstU32<1>;
 }
 
 pub const DOLLARS: Balance = 1_000_000_000_000;

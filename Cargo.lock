@@ -6832,6 +6832,7 @@ dependencies = [
  "hex-literal 0.4.1",
  "log",
  "pallet-balances",
+ "pallet-oracle",
  "pallet-timestamp",
  "parity-scale-codec",
  "pink-kv-session",
