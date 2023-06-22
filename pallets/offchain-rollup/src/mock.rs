@@ -99,7 +99,7 @@ parameter_types! {
 
 impl anchor::Config for Test {
     type RuntimeEvent = RuntimeEvent;
-    type OnResponse = ();
+    type OnResponse = Oracle;
     type QueuePrefix = QueuePrefix;
     type QueueCapacity = ConstU32<3>;
 }
