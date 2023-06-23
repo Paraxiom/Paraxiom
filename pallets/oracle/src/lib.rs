@@ -138,7 +138,8 @@ pub mod pallet {
                             price: resp.price,
                             timestamp_ms: resp.timestamp_ms,
                         }
-                    }).or(Err(Error::<T>::FailedToPushResponse))?;
+                    })
+                    .or(Err(Error::<T>::FailedToPushResponse))?;
                     pricequotes = k;
                 }
             }
@@ -192,7 +193,6 @@ pub mod pallet {
     //         Ok(())
     //     }
     // }
-
 
     /// A quote from a price feed oracle
     #[derive(Debug, PartialEq, Eq, Encode, Decode, Clone, scale_info::TypeInfo, MaxEncodedLen)]

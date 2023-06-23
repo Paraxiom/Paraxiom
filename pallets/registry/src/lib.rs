@@ -19,13 +19,13 @@ mod types;
 
 #[frame_support::pallet]
 pub mod pallet {
+    use crate::types::*;
     use frame_support::{
         dispatch::DispatchResultWithPostInfo,
         pallet_prelude::{OptionQuery, ValueQuery, *},
         traits::Bounded,
     };
     use frame_system::pallet_prelude::*;
-    use crate::types::*;
 
     #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
     #[cfg_attr(feature = "std", derive(Debug))]
@@ -56,7 +56,7 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     /// A 2D storage map of all feeds which the registry keeps track of.
-    /// 
+    ///
     /// The main mapping is [Account ID] -> [Feed Key] -> [ApiFeed / Feed URL].
     #[pallet::storage]
     #[pallet::getter(fn api_feeds)]
@@ -104,7 +104,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Checks if a feed exists and is active.
         pub fn is_active(account_id: T::AccountId, key: RegistryFeedKey<T>) -> bool {
-            if let Some(feed) = <ApiFeeds<T>>::get(&account_id, &key) {
+            if let Some(feed) = <ApiFeeds<T>>::get(&account_id, key) {
                 return feed.status == ApiFeedStatus::Active;
             }
 
@@ -117,8 +117,8 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Adds an API feed (in the form of a URL) to the storage to keep track of it and request
         /// data from it.
-        /// 
-        /// This origin must be root until further mechanisms for adding feeds is introduced such as 
+        ///
+        /// This origin must be root until further mechanisms for adding feeds is introduced such as
         /// Parachains adding feeds and putting up a staked amount as an economic incentive to avoid
         /// providing bad data.
         #[pallet::call_index(0)]
@@ -152,7 +152,7 @@ pub mod pallet {
         }
 
         /// Removes a feed from storage.
-        /// 
+        ///
         /// The origin must be the same as the creator which first registered the feed. The only
         /// other scenario which would cause an feed to be removed is having bad data (getting slashed)
         /// or other uptime metrics (e.g. the feed errors out too many times).

@@ -12,7 +12,8 @@ use frame_system::EnsureSigned;
 
 pub use frame_support::{
     traits::{
-        AsEnsureOriginWithArg, ConstBool, ConstU128, KeyOwnerProofSystem, Randomness, StorageInfo,
+        AsEnsureOriginWithArg, ConstBool, ConstU128, EitherOfDiverse, KeyOwnerProofSystem,
+        Randomness, StorageInfo,
     },
     weights::{constants::WEIGHT_REF_TIME_PER_SECOND, IdentityFee},
     StorageValue,
@@ -40,7 +41,7 @@ use frame_support::{
     construct_runtime,
     dispatch::DispatchClass,
     parameter_types,
-    traits::{ConstU32, ConstU64, ConstU8, Everything},
+    traits::{ConstU32, ConstU64, ConstU8, EqualPrivilegeOnly, Everything},
     weights::{
         ConstantMultiplier, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
         WeightToFeePolynomial,
@@ -129,8 +130,8 @@ pub type Executive = frame_executive::Executive<
     AllPalletsWithSystem,
 >;
 
-use phat_offchain_rollup::anchor as pallet_anchor;
 use pallet_oracle;
+use phat_offchain_rollup::anchor as pallet_anchor;
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.
@@ -559,6 +560,86 @@ impl pallet_registry::Config for Runtime {
 }
 
 parameter_types! {
+    pub const PreimageBaseDeposit: Balance = deposit(2, 64);
+    pub const PreimageByteDeposit: Balance = deposit(0, 1);
+}
+
+impl pallet_preimage::Config for Runtime {
+    type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type ManagerOrigin = EnsureRoot<AccountId>;
+    type BaseDeposit = PreimageBaseDeposit;
+    type ByteDeposit = PreimageByteDeposit;
+}
+
+parameter_types! {
+    pub MaximumSchedulerWeight: Weight = NORMAL_DISPATCH_RATIO * RuntimeBlockWeights::get().max_block;
+    pub const MaxScheduledPerBlock: u32 = 50;
+}
+
+impl pallet_scheduler::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type RuntimeOrigin = RuntimeOrigin;
+    type PalletsOrigin = OriginCaller;
+    type RuntimeCall = RuntimeCall;
+    type MaximumWeight = MaximumSchedulerWeight;
+    type ScheduleOrigin = EnsureRoot<AccountId>;
+    type MaxScheduledPerBlock = MaxScheduledPerBlock;
+    type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
+    type Preimages = Preimage;
+    type OriginPrivilegeCmp = EqualPrivilegeOnly;
+}
+
+impl para_democracy::Config for Runtime {}
+
+parameter_types! {
+    pub const LaunchPeriod: BlockNumber = 28 * DAYS;
+    pub const VotingPeriod: BlockNumber = 28 * DAYS;
+    pub const FastTrackVotingPeriod: BlockNumber = 3 * DAYS;
+    pub const MinimumDeposit: Balance = 100 * UNIT;
+    pub const EnactmentPeriod: BlockNumber = 30 * DAYS;
+    pub const CooloffPeriod: BlockNumber = 28 * DAYS;
+    pub const MaxVotes: u32 = 100;
+    pub const MaxProposals: u32 = 100;
+    pub const MaxDeposits: u32 = 100;
+    pub const MaxBlacklisted: u32 = 100;
+    pub const InstantAllowed: bool = true;
+}
+
+/// Configure the democracy pallet (see: /pallets/democracy)
+impl pallet_democracy::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type EnactmentPeriod = EnactmentPeriod;
+    type LaunchPeriod = LaunchPeriod;
+    type VotingPeriod = VotingPeriod;
+    type VoteLockingPeriod = EnactmentPeriod; // Same as EnactmentPeriod
+    type FastTrackVotingPeriod = FastTrackVotingPeriod;
+    type MinimumDeposit = MinimumDeposit;
+    type CooloffPeriod = CooloffPeriod;
+    type MaxVotes = MaxVotes;
+    type MaxProposals = MaxProposals;
+    type MaxDeposits = MaxDeposits;
+    type MaxBlacklisted = MaxBlacklisted;
+    type WeightInfo = pallet_democracy::weights::SubstrateWeight<Runtime>;
+    type InstantAllowed = InstantAllowed;
+    type BlacklistOrigin = EnsureRoot<AccountId>;
+    type ExternalOrigin = EitherOfDiverse<EnsureRoot<AccountId>, EnsureSigned<AccountId>>;
+    type ExternalMajorityOrigin = EitherOfDiverse<EnsureRoot<AccountId>, EnsureSigned<AccountId>>;
+    type ExternalDefaultOrigin = EitherOfDiverse<EnsureRoot<AccountId>, EnsureSigned<AccountId>>;
+    type FastTrackOrigin = EitherOfDiverse<EnsureRoot<AccountId>, EnsureSigned<AccountId>>;
+    type InstantOrigin = EitherOfDiverse<EnsureRoot<AccountId>, EnsureSigned<AccountId>>;
+    type CancellationOrigin = EnsureRoot<AccountId>;
+    type CancelProposalOrigin = EnsureRoot<AccountId>;
+    type VetoOrigin = EnsureSigned<AccountId>;
+    type PalletsOrigin = OriginCaller;
+    type Preimages = Preimage;
+    type Scheduler = Scheduler;
+    type Slash = ();
+}
+
+parameter_types! {
     pub const QueuePrefix: &'static [u8] = b"_queue/";
     pub const QueueCapacity: u32 = 128;
     pub const QuotesCount: u32 = 6;
@@ -616,6 +697,11 @@ construct_runtime!(
 
         Contracts: pallet_contracts = 51,
         Assets: pallet_assets = 52,
+
+        //Democracy
+        Democracy: pallet_democracy = 60,
+        Scheduler: pallet_scheduler = 61,
+        Preimage: pallet_preimage = 62,
 
         // Oracle Pallets
         // OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 41,
