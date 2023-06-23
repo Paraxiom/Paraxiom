@@ -6467,6 +6467,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "para-democracy"
+version = "3.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex",
+ "pallet-democracy",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "parachain-info"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.37#09418fc04c2608b123f36ca80f16df3d2096753b"
@@ -6566,15 +6584,19 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-contracts",
  "pallet-contracts-primitives",
+ "pallet-democracy",
  "pallet-oracle",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-registry",
+ "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-xcm",
+ "para-democracy",
  "parachain-info",
  "parity-scale-codec",
  "phat-offchain-rollup",
