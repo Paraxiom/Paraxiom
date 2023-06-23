@@ -76,6 +76,10 @@ You can then subsequently view this average with the chain state for Phat Oracle
 
 ![Screenshot from 2023-02-24 16-21-21](https://user-images.githubusercontent.com/6019499/221296456-5ad4be2b-0898-4881-81a1-14688065ec59.png)
 
+* https://github.com/AstarNetwork/swanky-plugin-phala
+* https://www.ise.tu-berlin.de/fileadmin/fg308/publications/2018/Off-chaining_Models_and_Approaches_to_Off-chain_Computations.pdf
+* https://github.com/l00k/devphase
+
 
 
 
