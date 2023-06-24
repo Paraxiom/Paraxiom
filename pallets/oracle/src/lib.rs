@@ -11,9 +11,8 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use sp_core::H256;
-    use sp_runtime::{AccountId32, traits::Hash};
+    use sp_runtime::{AccountId32, traits::{Hash}};
     use sp_std::vec::Vec;
-    use sp_runtime::traits::Hash;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -83,10 +82,12 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_signed(origin)?;
 
-            // we need seed to generate randomness
-            let seed = T::Hashing::hash_of(&data);
-            let randomness_seed = T::MyRandomness::random_seed();
-            let (random_value, _) = T::MyRandomness::random(&randomness_seed);
+            // generate a random seed from the randomness pallet and mix it
+            // with the data to get a unique seed for this request
+            let seed = (T::MyRandomness::random_seed().0, data).encode();
+            // generate random value from seed
+            let (request_id, _) = T::MyRandomness::random(&seed);
+
             Ok(())
         }
         /// Sends a request to the oracle
