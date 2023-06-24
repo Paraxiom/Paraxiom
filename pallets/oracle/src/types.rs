@@ -14,6 +14,6 @@ pub type RequestId = H256;
 #[derive(Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct Request<T: Config> { 
-    pub requester: T::AccountId,
+    pub caller: T::AccountId,
     pub nonce: u64,
 }
