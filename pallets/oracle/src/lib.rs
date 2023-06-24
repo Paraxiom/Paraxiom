@@ -4,10 +4,13 @@
 pub use self::pallet::*;
 pub use pallet::*;
 
+mod types;
+
 #[frame_support::pallet]
 pub mod pallet {
+    use crate::types::*;
     use frame_support::{
-        dispatch::DispatchResult, pallet_prelude::*, traits::StorageVersion, transactional, traits::Randomness,
+        dispatch::DispatchResult, pallet_prelude::*, traits::StorageVersion, transactional, traits::Randomness, Twox64Concat, Blake2_128Concat,
     };
     use frame_system::pallet_prelude::*;
     use sp_core::H256;
@@ -19,7 +22,6 @@ pub mod pallet {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         type QuotesCount: Get<u32>;
         type MyRandomness: Randomness<Self::Hash, Self::BlockNumber>;
-        // type Hashing: Hash<Output = Self::Hash>;
     }
 
     const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -43,6 +45,10 @@ pub mod pallet {
         // price quotes
         BoundedVec<PriceQuote, T::QuotesCount>,
     >;
+
+    /// Mapping for request ID -> (caller, payload, nonce)
+    #[pallet::storage]
+    pub type FeedRequests<T: Config> = StorageMap<_, Twox64Concat, RequestId, Request<T>>;
 
     #[pallet::storage]
     #[pallet::getter(fn averages)]
@@ -78,9 +84,9 @@ pub mod pallet {
             origin: OriginFor<T>,
             _name: H256,
             data: Bytes,
-            _nonce: u128,
+            nonce: u64,
         ) -> DispatchResult {
-            ensure_signed(origin)?;
+            let who = ensure_signed(origin)?;
 
             // generate a random seed from the randomness pallet and mix it
             // with the data to get a unique seed for this request
@@ -88,8 +94,22 @@ pub mod pallet {
             // generate random value from seed
             let (request_id, _) = T::MyRandomness::random(&seed);
 
+            // TODO: update storage to keep track of this request
+            FeedRequests::<T>::insert(
+                H256::from_slice(request_id.as_ref()),
+                Request {
+                    nonce,
+                    requester: who.clone(),
+                }
+            );
+
+            // TODO: send request to phat contract
+
+            // TODO: emit event
+            
             Ok(())
         }
+        
         /// Sends a request to the oracle
         #[pallet::weight(0)]
         #[pallet::call_index(1)]
