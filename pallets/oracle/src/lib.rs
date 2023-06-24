@@ -7,17 +7,20 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
     use frame_support::{
-        dispatch::DispatchResult, pallet_prelude::*, traits::StorageVersion, transactional,
+        dispatch::DispatchResult, pallet_prelude::*, traits::StorageVersion, transactional, traits::Randomness,
     };
     use frame_system::pallet_prelude::*;
     use sp_core::H256;
-    use sp_runtime::AccountId32;
+    use sp_runtime::{AccountId32, traits::Hash};
     use sp_std::vec::Vec;
+    use sp_runtime::traits::Hash;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         type QuotesCount: Get<u32>;
+        type MyRandomness: Randomness<Self::Hash, Self::BlockNumber>;
+        // type Hashing: Hash<Output = Self::Hash>;
     }
 
     const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -75,10 +78,15 @@ pub mod pallet {
         pub fn request(
             origin: OriginFor<T>,
             _name: H256,
-            _data: Bytes,
+            data: Bytes,
             _nonce: u128,
         ) -> DispatchResult {
             ensure_signed(origin)?;
+
+            // we need seed to generate randomness
+            let seed = T::Hashing::hash_of(&data);
+            let randomness_seed = T::MyRandomness::random_seed();
+            let (random_value, _) = T::MyRandomness::random(&randomness_seed);
             Ok(())
         }
         /// Sends a request to the oracle
