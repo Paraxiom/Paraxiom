@@ -657,6 +657,7 @@ impl pallet_anchor::Config for Runtime {
 impl pallet_oracle::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type QuotesCount = QuotesCount;
+    type MyRandomness = RandomnessCollectiveFlip;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
