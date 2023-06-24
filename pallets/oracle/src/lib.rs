@@ -54,6 +54,7 @@ pub mod pallet {
     #[pallet::getter(fn averages)]
     pub type Averages<T: Config> = StorageMap<_, Twox64Concat, Bytes, u128>;
 
+    // Events
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
@@ -64,6 +65,11 @@ pub mod pallet {
             owner: AccountId32,
             pair: Bytes,
             price: u128,
+        },
+        /// New feed registered
+        OracleRequest {
+            caller: T::AccountId,
+            key: RequestId,
         },
     }
 
@@ -82,6 +88,7 @@ pub mod pallet {
         #[transactional]
         pub fn request(
             origin: OriginFor<T>,
+            // feed_key: RegistryFeedKey<T>,
             _name: H256,
             data: Bytes,
             nonce: u64,
@@ -91,12 +98,13 @@ pub mod pallet {
             // generate a random seed from the randomness pallet and mix it
             // with the data to get a unique seed for this request
             let seed = (T::MyRandomness::random_seed().0, data).encode();
-            // generate random value from seed
+            // use random seed to create an idempotent request_id
             let (request_id, _) = T::MyRandomness::random(&seed);
+            let request_key = H256::from_slice(request_id.as_ref());
 
-            // TODO: update storage to keep track of this request
+            // update storage to keep track of this request
             FeedRequests::<T>::insert(
-                H256::from_slice(request_id.as_ref()),
+                request_key,
                 Request {
                     nonce,
                     caller: who.clone(),
@@ -104,8 +112,17 @@ pub mod pallet {
             );
 
             // TODO: send request to phat contract
+            // anchor::offchain_rollup::send_message(
+            //     name,
+            //     data,
+            // );
 
-            // TODO: emit event
+            // Emit an event.
+            Self::deposit_event(Event::OracleRequest {
+                caller: who.clone(),
+                key: request_key,
+                // TODO: add other fields here
+            });
             
             Ok(())
         }
@@ -152,6 +169,9 @@ pub mod pallet {
             if resp.contract_id != name {
                 return Err(Error::<T>::FailedToAuthenticateResponse.into());
             }
+
+            // TODO: remember to remove the request from `FeedRequests` storage
+            //       since its no longer needed.
 
             let storage_map = PriceFeeds::<T>::drain().collect::<Vec<_>>();
             let mut pricequotes = BoundedVec::<PriceQuote, T::QuotesCount>::default();
