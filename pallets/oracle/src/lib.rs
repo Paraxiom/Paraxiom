@@ -91,7 +91,7 @@ pub mod pallet {
             // feed_key: RegistryFeedKey<T>,
             _name: H256,
             data: Bytes,
-            nonce: u64,
+            nonce: u128,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
