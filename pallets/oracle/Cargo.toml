@@ -26,6 +26,7 @@ hex-literal = "0.4.1"
 
 # Local
 phat-offchain-rollup = { path = "../../pallets/offchain-rollup", default-features = false }
+pallet-registry = { path = "../../pallets/registry", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }

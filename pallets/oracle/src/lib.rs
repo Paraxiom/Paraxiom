@@ -16,9 +16,11 @@ pub mod pallet {
     use sp_core::H256;
     use sp_runtime::{AccountId32};
     use sp_std::vec::Vec;
+    use pallet_registry::types::RegistryFeedKey;
+    use phat_offchain_rollup::anchor;
 
     #[pallet::config]
-    pub trait Config: frame_system::Config {
+    pub trait Config: frame_system::Config + pallet_registry::Config {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         type QuotesCount: Get<u32>;
         type MyRandomness: Randomness<Self::Hash, Self::BlockNumber>;
@@ -58,7 +60,7 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        // Price quote received
+        /// Price quote received
         QuoteReceived {
             contract: H256,
             submitter: T::AccountId,
@@ -66,10 +68,11 @@ pub mod pallet {
             pair: Bytes,
             price: u128,
         },
-        /// New feed registered
+        /// New feed requested
         OracleRequest {
             caller: T::AccountId,
-            key: RequestId,
+            request_key: RequestId,
+            registry_feed_key: RegistryFeedKey<T>
         },
     }
 
@@ -88,8 +91,8 @@ pub mod pallet {
         #[transactional]
         pub fn request(
             origin: OriginFor<T>,
-            // feed_key: RegistryFeedKey<T>,
-            _name: H256,
+            registry_feed_key: RegistryFeedKey<T>,
+            name: H256,
             data: Bytes,
             nonce: u128,
         ) -> DispatchResult {
@@ -106,13 +109,16 @@ pub mod pallet {
             FeedRequests::<T>::insert(
                 request_key,
                 Request {
+                    registry_feed_key: registry_feed_key.clone(),
                     nonce,
                     caller: who.clone(),
                 }
             );
 
-            // TODO: send request to phat contract
-            // anchor::offchain_rollup::send_message(
+            let data = ("token0", "token1").encode();
+
+            // TODO: send message to phat contract
+            // anchor::push_message(
             //     name,
             //     data,
             // );
@@ -120,14 +126,13 @@ pub mod pallet {
             // Emit an event.
             Self::deposit_event(Event::OracleRequest {
                 caller: who.clone(),
-                key: request_key,
-                // TODO: add other fields here
+                request_key,
+                registry_feed_key,
             });
             
             Ok(())
         }
         
-        /// Sends a request to the oracle
         #[pallet::weight(0)]
         #[pallet::call_index(1)]
         #[transactional]
@@ -140,7 +145,7 @@ pub mod pallet {
             ensure_signed(origin)?;
             Ok(())
         }
-        /// Sends a request to the oracle
+
         #[pallet::weight(0)]
         #[pallet::call_index(2)]
         pub fn average(origin: OriginFor<T>) -> DispatchResult {

@@ -15,7 +15,8 @@ use sp_std::{borrow::ToOwned, convert::TryFrom, convert::TryInto, prelude::*, st
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-mod types;
+
+pub mod types;
 
 #[frame_support::pallet]
 pub mod pallet {

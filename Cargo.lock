@@ -6092,6 +6092,7 @@ dependencies = [
  "hex-literal 0.4.1",
  "log",
  "pallet-balances",
+ "pallet-registry",
  "pallet-timestamp",
  "parity-scale-codec",
  "phat-offchain-rollup",
