@@ -643,6 +643,7 @@ parameter_types! {
     pub const QueuePrefix: &'static [u8] = b"_queue/";
     pub const QueueCapacity: u32 = 128;
     pub const QuotesCount: u32 = 6;
+    pub const DataCount: u32 = 6;
 }
 
 /// Configure the anchor pallet (see: /pallets/offchain-rollup/anchor)
@@ -657,7 +658,8 @@ impl pallet_anchor::Config for Runtime {
 impl pallet_oracle::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type QuotesCount = QuotesCount;
-    type MyRandomness = RandomnessCollectiveFlip;
+    type DataCount = DataCount;
+    type OracleRandomness = RandomnessCollectiveFlip;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

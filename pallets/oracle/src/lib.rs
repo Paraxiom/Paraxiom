@@ -8,22 +8,28 @@ mod types;
 
 #[frame_support::pallet]
 pub mod pallet {
+    use core::convert::TryFrom;
+
     use crate::types::*;
     use frame_support::{
-        dispatch::DispatchResult, pallet_prelude::*, traits::StorageVersion, transactional, traits::Randomness, Twox64Concat, Blake2_128Concat,
+        dispatch::DispatchResult, pallet_prelude::*, traits::Randomness, traits::StorageVersion,
+        transactional, Blake2_128Concat, Twox64Concat,
     };
     use frame_system::pallet_prelude::*;
-    use sp_core::H256;
-    use sp_runtime::{AccountId32};
-    use sp_std::vec::Vec;
     use pallet_registry::types::RegistryFeedKey;
-    use phat_offchain_rollup::anchor;
+    use phat_offchain_rollup::{anchor, types::*};
+    use sp_core::H256;
+    use sp_runtime::AccountId32;
+    use sp_std::vec::Vec;
 
     #[pallet::config]
-    pub trait Config: frame_system::Config + pallet_registry::Config {
+    pub trait Config:
+        frame_system::Config + pallet_registry::Config + phat_offchain_rollup::anchor::Config
+    {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         type QuotesCount: Get<u32>;
-        type MyRandomness: Randomness<Self::Hash, Self::BlockNumber>;
+        type DataCount: Get<u32>;
+        type OracleRandomness: Randomness<Self::Hash, Self::BlockNumber>;
     }
 
     const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -32,8 +38,6 @@ pub mod pallet {
     #[pallet::generate_store(pub(super) trait Store)]
     #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
-
-    pub type Bytes = BoundedVec<u8, ConstU32<64>>;
 
     /// Mapping from (deployer, trading_pair) to price feed quotes
     #[pallet::storage]
@@ -46,6 +50,18 @@ pub mod pallet {
         Bytes,
         // price quotes
         BoundedVec<PriceQuote, T::QuotesCount>,
+    >;
+
+    /// Mapping from (deployer, RequestData, FeedData)
+    #[pallet::storage]
+    #[pallet::getter(fn feed_data)]
+    pub type FeedData<T: Config> = StorageDoubleMap<
+        _,
+        Twox64Concat,
+        AccountId32,
+        Blake2_128Concat,
+        Bytes,
+        BoundedVec<RequestData, T::DataCount>,
     >;
 
     /// Mapping for request ID -> (caller, payload, nonce)
@@ -68,11 +84,20 @@ pub mod pallet {
             pair: Bytes,
             price: u128,
         },
+
+        ResponseRecordReceived {
+            submitter: T::AccountId,
+            phat_contract_id: H256,
+            request_id: RequestId,
+            response_data: ResponseData,
+            timestamp_ms: u64,
+        },
+
         /// New feed requested
         OracleRequest {
             caller: T::AccountId,
             request_key: RequestId,
-            registry_feed_key: RegistryFeedKey<T>
+            registry_feed_key: RegistryFeedKey<T>,
         },
     }
 
@@ -81,6 +106,7 @@ pub mod pallet {
         FailedToAuthenticateResponse,
         FailedToDecodeResponse,
         FailedToPushResponse,
+        FailedToPushMessageToAnchor,
     }
 
     #[pallet::call]
@@ -93,16 +119,16 @@ pub mod pallet {
             origin: OriginFor<T>,
             registry_feed_key: RegistryFeedKey<T>,
             name: H256,
-            data: Bytes,
+            data: ValueBytes,
             nonce: u128,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
             // generate a random seed from the randomness pallet and mix it
             // with the data to get a unique seed for this request
-            let seed = (T::MyRandomness::random_seed().0, data).encode();
+            let seed = (T::OracleRandomness::random_seed().0, data.clone()).encode();
             // use random seed to create an idempotent request_id
-            let (request_id, _) = T::MyRandomness::random(&seed);
+            let (request_id, _) = T::OracleRandomness::random(&seed);
             let request_key = H256::from_slice(request_id.as_ref());
 
             // update storage to keep track of this request
@@ -112,27 +138,23 @@ pub mod pallet {
                     registry_feed_key: registry_feed_key.clone(),
                     nonce,
                     caller: who.clone(),
-                }
+                    requested_data: data.clone(),
+                },
             );
 
-            let data = ("token0", "token1").encode();
+            // sends request to rollup
+            anchor::pallet::Pallet::<T>::push_message(&name, data)
+                .map_err(|_| Error::<T>::FailedToPushMessageToAnchor)?;
 
-            // TODO: send message to phat contract
-            // anchor::push_message(
-            //     name,
-            //     data,
-            // );
-
-            // Emit an event.
             Self::deposit_event(Event::OracleRequest {
                 caller: who.clone(),
                 request_key,
                 registry_feed_key,
             });
-            
+
             Ok(())
         }
-        
+
         #[pallet::weight(0)]
         #[pallet::call_index(1)]
         #[transactional]
@@ -169,100 +191,47 @@ pub mod pallet {
 
     impl<T: Config> phat_offchain_rollup::anchor::OnResponse<T::AccountId> for Pallet<T> {
         fn on_response(name: H256, submitter: T::AccountId, data: Vec<u8>) -> DispatchResult {
-            let resp: ResponseRecord =
-                Decode::decode(&mut &data[..]).or(Err(Error::<T>::FailedToDecodeResponse))?;
-            if resp.contract_id != name {
-                return Err(Error::<T>::FailedToAuthenticateResponse.into());
-            }
+            let resp: ResponseRecord<T> =
+                Decode::decode(&mut &data[..]).map_err(|_| Error::<T>::FailedToDecodeResponse)?;
 
-            // TODO: remember to remove the request from `FeedRequests` storage
-            //       since its no longer needed.
+            ensure!(
+                resp.phat_contract_id == name,
+                Error::<T>::FailedToAuthenticateResponse
+            );
 
-            let storage_map = PriceFeeds::<T>::drain().collect::<Vec<_>>();
-            let mut pricequotes = BoundedVec::<PriceQuote, T::QuotesCount>::default();
+            // // TODO: remember to remove the request from `FeedRequests` storage
+            // //       since its no longer needed.
 
-            for (_i, j, mut k) in storage_map {
-                if j == resp.pair {
-                    if k.len() == T::QuotesCount::get() as usize {
-                        k.drain(..T::QuotesCount::get() as usize);
-                    }
-                    k.try_push({
-                        PriceQuote {
-                            contract_id: resp.contract_id,
-                            price: resp.price,
-                            timestamp_ms: resp.timestamp_ms,
-                        }
-                    })
-                    .or(Err(Error::<T>::FailedToPushResponse))?;
-                    pricequotes = k;
-                }
-            }
-            PriceFeeds::<T>::insert(&resp.owner, resp.pair.clone(), pricequotes);
+            // let storage_map = PriceFeeds::<T>::drain().collect::<Vec<_>>();
+            // let mut pricequotes = BoundedVec::<PriceQuote, T::QuotesCount>::default();
 
-            Self::deposit_event(Event::QuoteReceived {
-                contract: name,
+            // for (_i, j, mut k) in storage_map {
+            //     if j == resp.pair {
+            //         if k.len() == T::QuotesCount::get() as usize {
+            //             k.drain(..T::QuotesCount::get() as usize);
+            //         }
+            //         k.try_push({
+            //             PriceQuote {
+            //                 contract_id: resp.contract_id,
+            //                 price: resp.price,
+            //                 timestamp_ms: resp.timestamp_ms,
+            //             }
+            //         })
+            //         .or(Err(Error::<T>::FailedToPushResponse))?;
+            //         pricequotes = k;
+            //     }
+            // }
+            // PriceFeeds::<T>::insert(&resp.owner, resp.pair.clone(), pricequotes);
+
+            Self::deposit_event(Event::ResponseRecordReceived {
+                phat_contract_id: name,
                 submitter,
-                owner: resp.owner,
-                pair: resp.pair,
-                price: resp.price,
+                response_data: resp.response_data,
+                request_id: resp.request_id,
+                timestamp_ms: resp.timestamp_ms,
             });
+
             Ok(())
         }
-    }
-
-    // impl<T: Config> crate::anchor::OnResponse<T::AccountId> for Pallet<T> {
-    //     fn on_response(name: H256, submitter: T::AccountId, data: Vec<u8>) -> DispatchResult {
-    //         let resp: ResponseRecord =
-    //             Decode::decode(&mut &data[..]).or(Err(Error::<T>::FailedToDecodeResponse))?;
-    //         if resp.contract_id != name {
-    //             return Err(Error::<T>::FailedToAuthenticateResponse.into());
-    //         }
-
-    //         let mut pricequotes = BoundedVec::<PriceQuote, ConstU32<6>>::default();
-    //         let mut storage_map = PriceFeeds::<T>::drain().collect::<Vec<_>>();
-
-    //         for (_i, j, mut k) in storage_map.clone() {
-    //             if j == resp.pair {
-    //                 k.try_push({
-    //                     PriceQuote {
-    //                         contract_id: resp.contract_id,
-    //                         price: resp.price,
-    //                         timestamp_ms: resp.timestamp_ms,
-    //                     }
-    //                 });
-    //                 pricequotes = k.clone();
-
-    //             }
-
-    //         }
-    //         PriceFeeds::<T>::insert(&resp.owner, &resp.pair.clone(), &pricequotes);
-
-    //         Self::deposit_event(Event::QuoteReceived {
-    //             contract: name,
-    //             submitter,
-    //             owner: resp.owner,
-    //             pair: resp.pair,
-    //             price: resp.price,
-    //         });
-    //         Ok(())
-    //     }
-    // }
-
-    /// A quote from a price feed oracle
-    #[derive(Debug, PartialEq, Eq, Encode, Decode, Clone, scale_info::TypeInfo, MaxEncodedLen)]
-    pub struct PriceQuote {
-        contract_id: H256,
-        price: u128,
-        timestamp_ms: u64,
-    }
-
-    /// The reponse from the oracle Phat Contract (copied from Phat Contract)
-    #[derive(Debug, PartialEq, Eq, Encode, Decode, Clone, scale_info::TypeInfo)]
-    pub struct ResponseRecord {
-        pub owner: AccountId32,
-        pub contract_id: H256,
-        pub pair: Bytes,
-        pub price: u128,
-        pub timestamp_ms: u64,
     }
 }
