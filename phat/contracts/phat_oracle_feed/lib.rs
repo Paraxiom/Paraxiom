@@ -1,12 +1,11 @@
-#![cfg_attr(not(feature = "std"), no_std, no_main)]
-#[no_main]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
 
-pub use crate::sub_price_feed::*;
+pub use crate::phat_oracle_feed::*;
 
 #[ink::contract(env = pink_extension::PinkEnvironment)]
-mod sub_price_feed {
+mod phat_oracle_feed {
     use alloc::{format, string::String, vec, vec::Vec};
     use ink::storage::traits::StorageLayout;
     use pink_extension as pink;
@@ -22,9 +21,16 @@ mod sub_price_feed {
     };
 
     #[ink(storage)]
-    pub struct SubPriceFeed {
+    pub struct PhatOracleFeed {
         owner: AccountId,
         config: Option<Config>,
+    }
+
+    /// Represent each request as a struct
+    pub struct RequestRecord {
+        pub request_id: [u8; 32],
+        pub url: Vec<u8>, // string - the url to query
+        pub path: Vec<u8>, // string - path in JSON response
     }
 
     #[derive(Encode, Decode, Debug)]
@@ -34,12 +40,8 @@ mod sub_price_feed {
         rpc: String,
         /// The rollup anchor pallet id on the target blockchain
         pallet_id: u8,
-        /// Key for submitting rollup transaction
+        /// Key for submiting rollup transaction
         submit_key: [u8; 32],
-        /// The first token in the trading pair
-        token0: String,
-        /// The second token in the trading pair
-        token1: String,
     }
 
     #[derive(Encode, Decode, Debug)]
@@ -64,7 +66,7 @@ mod sub_price_feed {
 
     type Result<T> = core::result::Result<T, Error>;
 
-    impl SubPriceFeed {
+    impl PhatOracleFeed {
         #[ink(constructor)]
         pub fn default() -> Self {
             Self {
@@ -85,17 +87,13 @@ mod sub_price_feed {
             &mut self,
             rpc: String,
             pallet_id: u8,
-            submit_key: Vec<u8>,
-            token0: String,
-            token1: String,
+            submit_key: Vec<u8>
         ) -> Result<()> {
             self.ensure_owner()?;
             self.config = Some(Config {
                 rpc,
                 pallet_id,
                 submit_key: submit_key.try_into().or(Err(Error::InvalidKeyLength))?,
-                token0,
-                token1,
             });
             Ok(())
         }
@@ -138,53 +136,14 @@ mod sub_price_feed {
                 &contract_id,
                 &config.submit_key,
             )
-                .log_err("failed to claim name")
-                .map(Some)
-                .or(Err(Error::FailedToClaimName))
-        }
-
-        /// Fetches the price of a trading pair from CoinGecko
-        fn fetch_coingecko_price(token0: &str, token1: &str) -> Result<u128> {
-            use fixed::types::U64F64 as Fp;
-
-            // Fetch the price from CoinGecko.
-            //
-            // Supported tokens are listed in the detailed documentation:
-            // <https://www.coingecko.com/en/api/documentation>
-            let url = format!(
-                "https://api.coingecko.com/api/v3/simple/price?ids={token0}&vs_currencies={token1}"
-            );
-            let headers = vec![("accept".into(), "application/json".into())];
-            let resp = pink::http_get!(url, headers);
-            if resp.status_code != 200 {
-                return Err(Error::FailedToFetchPrice);
-            }
-            // The response looks like:
-            //  {"polkadot":{"usd":5.41}}
-            //
-            // serde-json-core doesn't do well with dynamic keys. Therefore we play a trick here.
-            // We replace the first token name by "token0" and the second token name by "token1".
-            // Then we can get the json with constant field names. After the replacement, the above
-            // sample json becomes:
-            //  {"token0":{"token1":5.41}}
-            let json = String::from_utf8(resp.body)
-                .or(Err(Error::FailedToDecode))?
-                .replace(token0, "token0")
-                .replace(token1, "token1");
-            let parsed: PriceResponse = pink_json::from_str(&json)
-                .log_err("failed to parse json")
-                .or(Err(Error::FailedToDecode))?;
-            // Parse to a fixed point and convert to u128 by rebasing to 1e12
-            let fp = Fp::from_str(parsed.token0.token1)
-                .log_err("failed to parse real number")
-                .or(Err(Error::FailedToDecode))?;
-            let f = fp * Fp::from_num(1_000_000_000_000u64);
-            Ok(f.to_num())
+            .log_err("failed to claim name")
+            .map(Some)
+            .or(Err(Error::FailedToClaimName))
         }
 
         /// Feeds a price by a rollup transaction
         #[ink(message)]
-        pub fn feed_price(&self) -> Result<Option<Vec<u8>>> {
+        pub fn feed_request(&self, request: RequestRecord) -> Result<Option<Vec<u8>>> {
             // Initialize a rollup client. The client tracks a "rollup transaction" that allows you
             // to read, write, and execute actions on the target chain with atomicity.
             let config = self.ensure_configured()?;
@@ -197,12 +156,14 @@ mod sub_price_feed {
             // Business logic starts from here.
 
             // Get the price and respond as a rollup action.
-            let price = Self::fetch_coingecko_price(&config.token0, &config.token1)?;
+            // TODO: fetch data using the URL
+            let price = u128::MAX;
+
             let response = ResponseRecord {
                 owner: self.owner.clone(),
                 contract_id: contract_id.clone(),
-                pair: format!("{}_{}", config.token0, config.token1),
-                price,
+                request_id: request.request_id,
+                data: price.to_le_bytes(),
                 timestamp_ms: self.env().block_timestamp(),
             };
             // Attach an action to the tx by:
@@ -259,24 +220,12 @@ mod sub_price_feed {
         owner: AccountId,
         /// The contract address
         contract_id: AccountId,
-        /// The trading pair name
-        pair: String,
-        /// The price, represented by a u128 integer (usually with 12 decimals)
-        price: u128,
+        /// A representation of the oracle feed request ID
+        request_id: [u8; 32],
+        /// The response data
+        data: Vec<u8>,
         /// The timestampe of the creation time
         timestamp_ms: u64,
-    }
-
-    // Define the structures to parse json like `{"token0":{"token1":1.23}}`
-    #[derive(Deserialize)]
-    struct PriceResponse<'a> {
-        #[serde(borrow)]
-        token0: PriceReponseInner<'a>,
-    }
-    #[derive(Deserialize)]
-    struct PriceReponseInner<'a> {
-        #[serde(borrow)]
-        token1: &'a str,
     }
 
     #[cfg(test)]
@@ -287,7 +236,7 @@ mod sub_price_feed {
         fn fixed_parse() {
             let _ = env_logger::try_init();
             pink_extension_runtime::mock_ext::mock_all_ext();
-            let p = SubPriceFeed::fetch_coingecko_price("polkadot", "usd").unwrap();
+            let p = PhatOracleFeed::fetch_coingecko_price("polkadot", "usd").unwrap();
             pink::warn!("Price: {p:?}");
         }
 
@@ -301,7 +250,7 @@ mod sub_price_feed {
                 "e5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a"
             );
 
-            let mut price_feed = SubPriceFeed::default();
+            let mut price_feed = PhatOracleFeed::default();
             price_feed
                 .config(
                     "http://127.0.0.1:39933".to_string(),

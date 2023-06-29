@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "contracts/*",
+    "contracts/phat_oracle",
+    "contracts/phat_oracle_feed"
 ]
 
 # Sneak peek of the new test engine!

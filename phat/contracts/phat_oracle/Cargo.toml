@@ -1,0 +1,49 @@
+[package]
+name = "phat_oracle"
+version = "0.1.0"
+authors = ["FaisalAl-Tameemi"]
+edition = "2021"
+
+[dependencies]
+ink_env = { version = "4.0.1", default-features = false }
+ink = { version = "4.0.1", default-features = false }
+
+scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
+
+pink-extension = { version = "0.4.1", default-features = false }
+phat_oracle_feed = { path = "../phat_oracle_feed", default-features = false, features = ["ink-as-dependency"] }
+
+[dev-dependencies]
+env_logger = "0.10.0"
+hex-literal = "0.4.1"
+pink-extension-runtime = "0.4.0"
+
+[lib]
+name = "phat_oracle"
+path = "lib.rs"
+crate-type = [
+	# Used for normal contract Wasm blobs.
+	"cdylib",
+]
+
+[features]
+default = ["std"]
+std = [
+    "ink_env/std",
+    "ink/std",
+    "scale/std",
+    "scale-info/std",
+    "pink-extension/std",
+    "phat_oracle_feed/std",
+]
+ink-as-dependency = []
+
+
+# Leave for `cargo contract` build.
+[patch.crates-io]
+serde = { git = "https://github.com/kvinwang/serde.git", branch = "pink" }
+
+# Necessary due to the cargo bug bug: https://github.com/rust-lang/cargo/issues/10118
+[profile.release]
+overflow-checks = false
