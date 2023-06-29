@@ -54,16 +54,16 @@ pub mod pallet {
         BoundedVec<PriceQuote, T::QuotesCount>,
     >;
 
-    /// Mapping from (deployer, RequestData, FeedData)
+    /// Mapping from (deployer, RequestData) -> FeedData
     #[pallet::storage]
     #[pallet::getter(fn feed_data)]
     pub type FeedData<T: Config> = StorageDoubleMap<
         _,
         Twox64Concat,
-        AccountId32,
+        T::AccountId,
         Blake2_128Concat,
-        Bytes,
-        BoundedVec<RequestData, T::DataCount>,
+        Request<T>,
+        ResponseData
     >;
 
     /// Mapping for request ID -> (caller, payload, nonce)
@@ -113,6 +113,7 @@ pub mod pallet {
         ApiFeedNotActive,
         FailedToEncodeData,
         FailedToFindOracleFeeds,
+        FailedToGetFeedRequest,
     }
 
     #[pallet::call]
@@ -146,6 +147,8 @@ pub mod pallet {
 
             // generate a random request ID
             let seed = (T::OracleRandomness::random_seed(), nonce).0.encode();
+
+            // FIXME: randomness not appropriate
             let (request_id, _) = T::OracleRandomness::random(&seed);
             let request_id = H256::from_slice(request_id.as_ref());
 
@@ -169,7 +172,7 @@ pub mod pallet {
             //       to remove the need for inefficient iteration by key.
             //       Also shouldn't pick the name randomly.
             //       Multiple names can be selected and messages sent to each.
-            let name = anchor::pallet::SubmitterByNames::iter_keys()
+            let name = anchor::pallet::SubmitterByNames::<T>::iter_keys()
                 .last()
                 .ok_or(Error::<T>::FailedToFindOracleFeeds)?;
 
@@ -233,34 +236,9 @@ pub mod pallet {
                 Error::<T>::FailedToAuthenticateResponse
             );
 
-            // store data
-            // compute aggregation
+            let requested_data = FeedRequests::<T>::get(resp.request_id).ok_or(Error::<T>::FailedToGetFeedRequest)?;
 
-            // let feed_data = FeedData::<T>::insert(submitter, resp.request_data, resp.response_data);
-
-            // // TODO: remember to remove the request from `FeedRequests` storage
-            // //       since its no longer needed.
-
-            // let storage_map = PriceFeeds::<T>::drain().collect::<Vec<_>>();
-            // let mut pricequotes = BoundedVec::<PriceQuote, T::QuotesCount>::default();
-
-            // for (_i, j, mut k) in storage_map {
-            //     if j == resp.pair {
-            //         if k.len() == T::QuotesCount::get() as usize {
-            //             k.drain(..T::QuotesCount::get() as usize);
-            //         }
-            //         k.try_push({
-            //             PriceQuote {
-            //                 contract_id: resp.contract_id,
-            //                 price: resp.price,
-            //                 timestamp_ms: resp.timestamp_ms,
-            //             }
-            //         })
-            //         .or(Err(Error::<T>::FailedToPushResponse))?;
-            //         pricequotes = k;
-            //     }
-            // }
-            // PriceFeeds::<T>::insert(&resp.owner, resp.pair.clone(), pricequotes);
+            FeedData::<T>::insert(submitter.clone(), requested_data, resp.response_data.clone());
 
             Self::deposit_event(Event::ResponseRecordReceived {
                 phat_contract_id: name,
