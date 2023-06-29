@@ -112,11 +112,18 @@ pub mod pallet {
         FailedToGetApiFeed,
         ApiFeedNotActive,
         FailedToEncodeData,
+        FailedToFindOracleFeeds,
     }
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// Sends a request to the oracle
+        /// An oracle request for information.
+        ///
+        /// `registry_feed_key`: a feed identifier that can be found in the Registry.
+        /// `nonce`: an incrementing number provided by the client.
+        ///
+        /// The method fetches the URL and path associated with the feed requested
+        /// and sends off a message to the phat contract(s) via rollup request-response.
         #[pallet::weight(0)]
         #[pallet::call_index(0)]
         #[transactional]
@@ -125,8 +132,11 @@ pub mod pallet {
             registry_feed_key: RegistryFeedKey<T>,
             nonce: u128,
         ) -> DispatchResult {
+            // TODO: weight should be set dynamically based on how many oracle phat contracts
+            //       are called. Same for the fees.
             let who = ensure_signed(origin)?;
 
+            // get feed information from the registry pallet
             let api_feed: ApiFeed<T> = pallet_registry::ApiFeeds::<T>::get(&who, &registry_feed_key)
                 .ok_or(Error::<T>::FailedToGetApiFeed)?;
             let feed_status = api_feed.status;
@@ -134,12 +144,13 @@ pub mod pallet {
             let feed_path = api_feed.path;
             let feed_url = api_feed.url;
 
-            // FIXME: randomness for seed
-            let seed = T::OracleRandomness::random_seed().0.encode();
+            // generate a random request ID
+            let seed = (T::OracleRandomness::random_seed(), nonce).0.encode();
             let (request_id, _) = T::OracleRandomness::random(&seed);
             let request_id = H256::from_slice(request_id.as_ref());
 
-            let data_raw = (feed_url, feed_path, request_id);
+            // encode the phat contract request
+            let data_raw = (request_id, feed_url, feed_path);
             let data = BoundedVec::try_from(data_raw.encode())
                 .map_err(|_| Error::<T>::FailedToEncodeData)?;
 
@@ -154,7 +165,15 @@ pub mod pallet {
                 },
             );
 
-            // sends request to rollup
+            // TODO: No need to get all the names, add anchor pallet storage
+            //       to remove the need for inefficient iteration by key.
+            //       Also shouldn't pick the name randomly.
+            //       Multiple names can be selected and messages sent to each.
+            let name = anchor::pallet::SubmitterByNames::iter_keys()
+                .last()
+                .ok_or(Error::<T>::FailedToFindOracleFeeds)?;
+
+            // send request to rollup
             anchor::pallet::Pallet::<T>::push_message(&name, data)
                 .map_err(|_| Error::<T>::FailedToPushMessageToAnchor)?;
 

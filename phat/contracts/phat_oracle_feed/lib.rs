@@ -27,6 +27,8 @@ mod phat_oracle_feed {
     }
 
     /// Represent each request as a struct
+    #[derive(Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub struct RequestRecord {
         pub request_id: [u8; 32],
         pub url: Vec<u8>, // string - the url to query
@@ -141,6 +143,40 @@ mod phat_oracle_feed {
             .or(Err(Error::FailedToClaimName))
         }
 
+        #[ink(message)]
+        pub fn process_queue_request(&self) -> Result<()> {
+            let config = self.ensure_configured()?;
+            let contract_id = self.env().account_id();
+            let mut client =
+                SubstrateRollupClient::new(&config.rpc, config.pallet_id, &contract_id, b"q/")
+                    .log_err("failed to create rollup client")
+                    .or(Err(Error::FailedToCreateClient))?;
+
+            type Req = (Vec<u8>, Vec<u8>, Vec<u8>);
+            //  get the request from the queue
+            let next_request = client.session().queue.pop()
+                .map_err(|_| Error::<T>::FailedToDecode)?;
+
+            if let Some(raw) = next_request {
+                let next_decoded = Req::decode(raw)
+                    .map_err(|_| Error::<T>::FailedToDecode)?;
+
+                let (url, path, request_id) = next_decoded;
+                
+                pink::debug!("request_id: {:?}", request_id);
+                pink::debug!("url: {:?}", url);
+                pink::debug!("path: {:?}", path);
+
+                // TODO: implement the logic
+                //  2. fetch the data from the URL
+                //  3. submit the data as a rollup action
+            } else {
+                pink::debug!("no request in the queue");
+            }
+
+            Ok(())
+        }
+
         /// Feeds a price by a rollup transaction
         #[ink(message)]
         pub fn feed_request(&self, request: RequestRecord) -> Result<Option<Vec<u8>>> {
@@ -163,7 +199,7 @@ mod phat_oracle_feed {
                 owner: self.owner.clone(),
                 contract_id: contract_id.clone(),
                 request_id: request.request_id,
-                data: price.to_le_bytes(),
+                data: price.to_le_bytes().to_vec(),
                 timestamp_ms: self.env().block_timestamp(),
             };
             // Attach an action to the tx by:
@@ -264,7 +300,7 @@ mod phat_oracle_feed {
             let r = price_feed.maybe_init_rollup().expect("failed to init");
             pink::warn!("init rollup: {r:?}");
 
-            let r = price_feed.feed_price().expect("failed to feed price");
+            let r = price_feed.feed_request().expect("failed to feed price");
             pink::warn!("feed price: {r:?}");
         }
     }
