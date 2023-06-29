@@ -17,6 +17,7 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use pallet_registry::types::RegistryFeedKey;
+    use pallet_registry::ApiFeed;
     use phat_offchain_rollup::{anchor, types::*};
     use scale_info::Registry;
     use sp_core::H256;
@@ -126,21 +127,21 @@ pub mod pallet {
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
-            let api_feed = pallet_registry::ApiFeeds::<T>::get(&who, &registry_feed_key)
+            let api_feed: ApiFeed<T> = pallet_registry::ApiFeeds::<T>::get(&who, &registry_feed_key)
                 .ok_or(Error::<T>::FailedToGetApiFeed)?;
             let feed_status = api_feed.status;
             ensure!(feed_status.is_active(), Error::<T>::ApiFeedNotActive);
             let feed_path = api_feed.path;
             let feed_url = api_feed.url;
-            let feed_name = api_feed.name;
-
-            let data = BoundedVec::try_from((feed_url, feed_path).encode())
-                .map_err(|_| Error::<T>::FailedToEncodeData)?;
 
             // FIXME: randomness for seed
-            let seed = (T::OracleRandomness::random_seed().0, data.clone()).encode();
+            let seed = T::OracleRandomness::random_seed().0.encode();
             let (request_id, _) = T::OracleRandomness::random(&seed);
             let request_id = H256::from_slice(request_id.as_ref());
+
+            let data_raw = (feed_url, feed_path, request_id);
+            let data = BoundedVec::try_from(data_raw.encode())
+                .map_err(|_| Error::<T>::FailedToEncodeData)?;
 
             // update storage to keep track of this request
             FeedRequests::<T>::insert(
@@ -154,7 +155,7 @@ pub mod pallet {
             );
 
             // sends request to rollup
-            anchor::pallet::Pallet::<T>::push_message(&feed_name, data)
+            anchor::pallet::Pallet::<T>::push_message(&name, data)
                 .map_err(|_| Error::<T>::FailedToPushMessageToAnchor)?;
 
             Self::deposit_event(Event::OracleRequest {

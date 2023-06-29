@@ -31,15 +31,17 @@ pub mod pallet {
 
     #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, RuntimeDebugNoBound)]
     #[scale_info(skip_type_params(T))]
-    // TODO: think if it makes more sense to use getters instead of
-    // public struct fields
-    // TODO: try to make generic only to T: Config
+    // TODO: think if it makes more sense to use getters instead of public struct fields
     pub struct ApiFeed<T: Config> {
+        /// Which block number the feed was registered at
         pub started_at: BlockNumberFor<T>,
+        /// The API endpoint to fetch data from via phat contracts
         pub url: RegistryFeedUrl<T>,
+        /// The data path to read from the API response
         pub path: RegistryFeedPath<T>,
-        pub status: ApiFeedStatus,
-        pub name: H256,
+        /// The overall status of the feed. Defaults to "Registered"
+        /// and gets changed to "Active" when rollup is established.
+        pub status: ApiFeedStatus
     }
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -136,7 +138,7 @@ pub mod pallet {
             key: RegistryFeedKey<T>,
             url: RegistryFeedUrl<T>,
             path: RegistryFeedPath<T>,
-            name: H256
+            // TODO: add topic field
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
@@ -145,8 +147,7 @@ pub mod pallet {
                 started_at: block_number,
                 url,
                 path,
-                status: ApiFeedStatus::Registered,
-                name
+                status: ApiFeedStatus::Registered
             };
 
             // Insert the feed into storage.
