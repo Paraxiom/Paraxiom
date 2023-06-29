@@ -557,6 +557,7 @@ impl pallet_registry::Config for Runtime {
     type MaxUrlSize = ConstU32<512>;
     type MaxKeySize = ConstU32<128>;
     type MaxPathSize = ConstU32<256>;
+    // type MaxNameSize = ConstU32<64>;
 }
 
 parameter_types! {

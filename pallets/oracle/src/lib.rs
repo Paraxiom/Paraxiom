@@ -18,6 +18,7 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use pallet_registry::types::RegistryFeedKey;
     use phat_offchain_rollup::{anchor, types::*};
+    use scale_info::Registry;
     use sp_core::H256;
     use sp_runtime::AccountId32;
     use sp_std::vec::Vec;
@@ -96,7 +97,7 @@ pub mod pallet {
         /// New feed requested
         OracleRequest {
             caller: T::AccountId,
-            request_key: RequestId,
+            request_id: RequestId,
             registry_feed_key: RegistryFeedKey<T>,
         },
     }
@@ -107,6 +108,9 @@ pub mod pallet {
         FailedToDecodeResponse,
         FailedToPushResponse,
         FailedToPushMessageToAnchor,
+        FailedToGetApiFeed,
+        ApiFeedNotActive,
+        FailedToEncodeData,
     }
 
     #[pallet::call]
@@ -118,22 +122,29 @@ pub mod pallet {
         pub fn request(
             origin: OriginFor<T>,
             registry_feed_key: RegistryFeedKey<T>,
-            name: H256,
-            data: ValueBytes,
             nonce: u128,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
-            // generate a random seed from the randomness pallet and mix it
-            // with the data to get a unique seed for this request
+            let api_feed = pallet_registry::ApiFeeds::<T>::get(&who, &registry_feed_key)
+                .ok_or(Error::<T>::FailedToGetApiFeed)?;
+            let feed_status = api_feed.status;
+            ensure!(feed_status.is_active(), Error::<T>::ApiFeedNotActive);
+            let feed_path = api_feed.path;
+            let feed_url = api_feed.url;
+            let feed_name = api_feed.name;
+
+            let data = BoundedVec::try_from((feed_url, feed_path).encode())
+                .map_err(|_| Error::<T>::FailedToEncodeData)?;
+
+            // FIXME: randomness for seed
             let seed = (T::OracleRandomness::random_seed().0, data.clone()).encode();
-            // use random seed to create an idempotent request_id
             let (request_id, _) = T::OracleRandomness::random(&seed);
-            let request_key = H256::from_slice(request_id.as_ref());
+            let request_id = H256::from_slice(request_id.as_ref());
 
             // update storage to keep track of this request
             FeedRequests::<T>::insert(
-                request_key,
+                request_id,
                 Request {
                     registry_feed_key: registry_feed_key.clone(),
                     nonce,
@@ -143,12 +154,12 @@ pub mod pallet {
             );
 
             // sends request to rollup
-            anchor::pallet::Pallet::<T>::push_message(&name, data)
+            anchor::pallet::Pallet::<T>::push_message(&feed_name, data)
                 .map_err(|_| Error::<T>::FailedToPushMessageToAnchor)?;
 
             Self::deposit_event(Event::OracleRequest {
                 caller: who.clone(),
-                request_key,
+                request_id,
                 registry_feed_key,
             });
 
@@ -172,19 +183,22 @@ pub mod pallet {
         #[pallet::call_index(2)]
         pub fn average(origin: OriginFor<T>) -> DispatchResult {
             ensure_signed(origin)?;
-            let storage_map = PriceFeeds::<T>::iter().collect::<Vec<_>>();
-            let mut averages: Vec<(Bytes, u128)> = Vec::new();
+            
+            todo!("implement an average aggergator");
+            
+            // let storage_map = PriceFeeds::<T>::iter().collect::<Vec<_>>();
+            // let mut averages: Vec<(Bytes, u128)> = Vec::new();
 
-            storage_map.iter().for_each(|(_i, _j, k)| {
-                let sum: u128 = k.iter().map(|j| j.price).sum::<u128>();
-                let count = k.len() as u128;
-                let average = sum / count;
-                averages.push((_j.clone(), average));
-            });
+            // storage_map.iter().for_each(|(_i, _j, k)| {
+            //     let sum: u128 = k.iter().map(|j| j.price).sum::<u128>();
+            //     let count = k.len() as u128;
+            //     let average = sum / count;
+            //     averages.push((_j.clone(), average));
+            // });
 
-            for (pair, average) in averages {
-                Averages::<T>::insert(&pair, average);
-            }
+            // for (pair, average) in averages {
+            //     Averages::<T>::insert(&pair, average);
+            // }
             Ok(())
         }
     }
@@ -198,6 +212,11 @@ pub mod pallet {
                 resp.phat_contract_id == name,
                 Error::<T>::FailedToAuthenticateResponse
             );
+
+            // store data
+            // compute aggregation
+
+            // let feed_data = FeedData::<T>::insert(submitter, resp.request_data, resp.response_data);
 
             // // TODO: remember to remove the request from `FeedRequests` storage
             // //       since its no longer needed.

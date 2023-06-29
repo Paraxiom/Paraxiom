@@ -27,14 +27,19 @@ pub mod pallet {
         traits::Bounded,
     };
     use frame_system::pallet_prelude::*;
+    use sp_core::H256;
 
-    #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-    #[cfg_attr(feature = "std", derive(Debug))]
-    pub struct ApiFeed<BlockNumber, RegistryString, RegistryPath> {
-        started_at: BlockNumber,
-        url: RegistryString,
-        path: RegistryPath,
-        status: ApiFeedStatus,
+    #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, RuntimeDebugNoBound)]
+    #[scale_info(skip_type_params(T))]
+    // TODO: think if it makes more sense to use getters instead of
+    // public struct fields
+    // TODO: try to make generic only to T: Config
+    pub struct ApiFeed<T: Config> {
+        pub started_at: BlockNumberFor<T>,
+        pub url: RegistryFeedUrl<T>,
+        pub path: RegistryFeedPath<T>,
+        pub status: ApiFeedStatus,
+        pub name: H256,
     }
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -50,6 +55,8 @@ pub mod pallet {
         type MaxKeySize: Get<u32>;
         #[pallet::constant]
         type MaxPathSize: Get<u32>;
+        // #[pallet::constant]
+        // type MaxNameSize: Get<u32>;
     }
 
     #[pallet::pallet]
@@ -67,7 +74,7 @@ pub mod pallet {
         T::AccountId,
         Twox64Concat,
         RegistryFeedKey<T>,
-        ApiFeed<T::BlockNumber, RegistryFeedUrl<T>, RegistryFeedPath<T>>,
+        ApiFeed<T>,
     >;
 
     // Events
@@ -78,13 +85,13 @@ pub mod pallet {
         FeedRegistered {
             caller: T::AccountId,
             key: RegistryFeedKey<T>,
-            feed: ApiFeed<T::BlockNumber, RegistryFeedUrl<T>, RegistryFeedPath<T>>,
+            feed: ApiFeed<T>,
         },
         /// Existing feed unregistered
         FeedUnregistered {
             caller: T::AccountId,
             key: RegistryFeedKey<T>,
-            feed: ApiFeed<T::BlockNumber, RegistryFeedUrl<T>, RegistryFeedPath<T>>,
+            feed: ApiFeed<T>,
         },
     }
 
@@ -129,6 +136,7 @@ pub mod pallet {
             key: RegistryFeedKey<T>,
             url: RegistryFeedUrl<T>,
             path: RegistryFeedPath<T>,
+            name: H256
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
@@ -138,6 +146,7 @@ pub mod pallet {
                 url,
                 path,
                 status: ApiFeedStatus::Registered,
+                name
             };
 
             // Insert the feed into storage.

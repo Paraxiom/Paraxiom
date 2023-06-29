@@ -11,6 +11,7 @@ use frame_support::{
 pub type RegistryFeedKey<T> = BoundedVec<u8, <T as Config>::MaxKeySize>;
 pub type RegistryFeedUrl<T> = BoundedVec<u8, <T as Config>::MaxUrlSize>;
 pub type RegistryFeedPath<T> = BoundedVec<u8, <T as Config>::MaxPathSize>;
+// pub type RegistryFeedName<T> = BoundedVec<u8, <T as Config>::MaxNameSize>;
 
 /// Feed status
 #[derive(Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, Default)]
@@ -22,4 +23,10 @@ pub enum ApiFeedStatus {
     Inactive,
     // occurs if a feed has too many errors
     Slashed,
+}
+
+impl ApiFeedStatus {
+    pub fn is_active(&self) -> bool {
+        return *self == ApiFeedStatus::Active
+    }
 }
