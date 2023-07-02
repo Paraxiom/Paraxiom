@@ -4,7 +4,6 @@ use frame_support::BoundedVec;
 
 use phat_offchain_rollup::types::ValueBytes;
 use sp_core::H256;
-use sp_runtime::AccountId32;
 
 use pallet_registry::types::RegistryFeedKey;
 

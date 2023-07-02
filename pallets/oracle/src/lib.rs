@@ -18,8 +18,7 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use pallet_registry::types::RegistryFeedKey;
     use pallet_registry::ApiFeed;
-    use phat_offchain_rollup::{anchor, types::*};
-    use scale_info::Registry;
+    use phat_offchain_rollup::anchor;
     use sp_core::H256;
     use sp_runtime::AccountId32;
     use sp_std::vec::Vec;
@@ -57,14 +56,8 @@ pub mod pallet {
     /// Mapping from (deployer, RequestData) -> FeedData
     #[pallet::storage]
     #[pallet::getter(fn feed_data)]
-    pub type FeedData<T: Config> = StorageDoubleMap<
-        _,
-        Twox64Concat,
-        T::AccountId,
-        Blake2_128Concat,
-        Request<T>,
-        ResponseData
-    >;
+    pub type FeedData<T: Config> =
+        StorageDoubleMap<_, Twox64Concat, T::AccountId, Blake2_128Concat, Request<T>, ResponseData>;
 
     /// Mapping for request ID -> (caller, payload, nonce)
     #[pallet::storage]
@@ -138,8 +131,9 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
 
             // get feed information from the registry pallet
-            let api_feed: ApiFeed<T> = pallet_registry::ApiFeeds::<T>::get(&who, &registry_feed_key)
-                .ok_or(Error::<T>::FailedToGetApiFeed)?;
+            let api_feed: ApiFeed<T> =
+                pallet_registry::ApiFeeds::<T>::get(&who, &registry_feed_key)
+                    .ok_or(Error::<T>::FailedToGetApiFeed)?;
             let feed_status = api_feed.status;
             ensure!(feed_status.is_active(), Error::<T>::ApiFeedNotActive);
             let feed_path = api_feed.path;
@@ -206,9 +200,9 @@ pub mod pallet {
         #[pallet::call_index(2)]
         pub fn average(origin: OriginFor<T>) -> DispatchResult {
             ensure_signed(origin)?;
-            
+
             todo!("implement an average aggergator");
-            
+
             // let storage_map = PriceFeeds::<T>::iter().collect::<Vec<_>>();
             // let mut averages: Vec<(Bytes, u128)> = Vec::new();
 
@@ -222,7 +216,7 @@ pub mod pallet {
             // for (pair, average) in averages {
             //     Averages::<T>::insert(&pair, average);
             // }
-            Ok(())
+            // Ok(())
         }
     }
 
@@ -236,9 +230,14 @@ pub mod pallet {
                 Error::<T>::FailedToAuthenticateResponse
             );
 
-            let requested_data = FeedRequests::<T>::get(resp.request_id).ok_or(Error::<T>::FailedToGetFeedRequest)?;
+            let requested_data = FeedRequests::<T>::get(resp.request_id)
+                .ok_or(Error::<T>::FailedToGetFeedRequest)?;
 
-            FeedData::<T>::insert(submitter.clone(), requested_data, resp.response_data.clone());
+            FeedData::<T>::insert(
+                submitter.clone(),
+                requested_data,
+                resp.response_data.clone(),
+            );
 
             Self::deposit_event(Event::ResponseRecordReceived {
                 phat_contract_id: name,
