@@ -2,6 +2,8 @@ use crate::anchor;
 
 use pallet_oracle;
 
+use pallet_registry;
+
 use frame_support::{pallet_prelude::ConstU32, parameter_types};
 use frame_system as system;
 use sp_core::H256;

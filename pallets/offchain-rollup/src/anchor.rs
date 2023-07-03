@@ -321,6 +321,7 @@ pub mod pallet {
         };
         // Pallets
         use frame_support::{assert_noop, assert_ok};
+        use pallet_oracle::types::ResponseRecord;
         use pink_kv_session::ReadTracker;
 
         const NAME1: H256 = H256([1u8; 32]);
@@ -389,7 +390,7 @@ pub mod pallet {
                 assert_eq!(Anchor::states(NAME1, bvec(b"key")), None);
 
                 // Action received
-                let response = pallet_oracle::ResponseRecord {
+                let response = ResponseRecord {
                     owner: sp_runtime::AccountId32::from([0u8; 32]),
                     contract_id: NAME1,
                     pair: bvec(b"polkadot_usd"),

@@ -29,7 +29,9 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use sp_core::H256;
 
-    #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, RuntimeDebugNoBound)]
+    #[derive(
+        Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, RuntimeDebugNoBound,
+    )]
     #[scale_info(skip_type_params(T))]
     // TODO: think if it makes more sense to use getters instead of public struct fields
     pub struct ApiFeed<T: Config> {
@@ -41,7 +43,7 @@ pub mod pallet {
         pub path: RegistryFeedPath<T>,
         /// The overall status of the feed. Defaults to "Registered"
         /// and gets changed to "Active" when rollup is established.
-        pub status: ApiFeedStatus
+        pub status: ApiFeedStatus,
     }
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -147,7 +149,7 @@ pub mod pallet {
                 started_at: block_number,
                 url,
                 path,
-                status: ApiFeedStatus::Registered
+                status: ApiFeedStatus::Registered,
             };
 
             // Insert the feed into storage.

@@ -4,7 +4,7 @@
 pub use self::pallet::*;
 pub use pallet::*;
 
-mod types;
+pub mod types;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -166,12 +166,12 @@ pub mod pallet {
             //       to remove the need for inefficient iteration by key.
             //       Also shouldn't pick the name randomly.
             //       Multiple names can be selected and messages sent to each.
-            let name = anchor::pallet::SubmitterByNames::<T>::iter_keys()
+            let name = phat_offchain_rollup::anchor::SubmitterByNames::<T>::iter_keys()
                 .last()
                 .ok_or(Error::<T>::FailedToFindOracleFeeds)?;
 
             // send request to rollup
-            anchor::pallet::Pallet::<T>::push_message(&name, data)
+            phat_offchain_rollup::anchor::pallet::Pallet::<T>::push_message(&name, data)
                 .map_err(|_| Error::<T>::FailedToPushMessageToAnchor)?;
 
             Self::deposit_event(Event::OracleRequest {
