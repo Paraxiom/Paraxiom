@@ -18,14 +18,14 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use pallet_registry::types::RegistryFeedKey;
     use pallet_registry::ApiFeed;
-    use phat_offchain_rollup::anchor;
+    use phat_offchain_rollup::anchor as pallet_anchor;
     use sp_core::H256;
     use sp_runtime::AccountId32;
     use sp_std::vec::Vec;
 
     #[pallet::config]
     pub trait Config:
-        frame_system::Config + pallet_registry::Config + phat_offchain_rollup::anchor::Config
+        frame_system::Config + pallet_registry::Config + pallet_anchor::Config
     {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         type QuotesCount: Get<u32>;

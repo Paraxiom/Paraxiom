@@ -1,7 +1,5 @@
-use crate::anchor;
-
+use crate::anchor as pallet_anchor;
 use pallet_oracle;
-
 use pallet_registry;
 
 use frame_support::{pallet_prelude::ConstU32, parameter_types};
@@ -28,7 +26,8 @@ frame_support::construct_runtime!(
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         // Pallets to test
-        Anchor: anchor::{Pallet, Call, Storage, Event<T>},
+        Anchor: pallet_anchor::{Pallet, Call, Storage, Event<T>},
+        Registry: pallet_registry::{Pallet, Call, Storage, Event<T>},
         Oracle: pallet_oracle::{Pallet, Call, Storage, Event<T>},
     }
 );
@@ -95,20 +94,27 @@ impl pallet_timestamp::Config for Test {
     type WeightInfo = ();
 }
 
-parameter_types! {
-    pub const QueuePrefix: &'static [u8] = b"_queue/";
+impl pallet_oracle::Config for Test {
+    type RuntimeEvent = RuntimeEvent;
+    type QuotesCount = ConstU32<1>;
 }
 
-impl anchor::Config for Test {
+impl pallet_registry::Config for Test {
+    type RuntimeEvent = RuntimeEvent;
+    type MaxUrlSize = ConstU32<256>;
+    type MaxKeySize = ConstU32<256>;
+    type MaxPathSize = ConstU32<256>;
+}
+
+impl pallet_anchor::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type OnResponse = Oracle;
     type QueuePrefix = QueuePrefix;
     type QueueCapacity = ConstU32<3>;
 }
 
-impl pallet_oracle::Config for Test {
-    type RuntimeEvent = RuntimeEvent;
-    type QuotesCount = ConstU32<1>;
+parameter_types! {
+    pub const QueuePrefix: &'static [u8] = b"_queue/";
 }
 
 pub const DOLLARS: Balance = 1_000_000_000_000;

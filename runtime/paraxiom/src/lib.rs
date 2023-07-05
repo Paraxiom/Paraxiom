@@ -696,7 +696,7 @@ construct_runtime!(
         DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
         // Registry
-        RegistryPallet: pallet_registry::{Pallet, Call, Storage, Event<T>}  = 40,
+        Registry: pallet_registry::{Pallet, Call, Storage, Event<T>}  = 40,
         RandomnessCollectiveFlip: pallet_randomness_collective_flip = 50,
 
         Contracts: pallet_contracts = 51,
