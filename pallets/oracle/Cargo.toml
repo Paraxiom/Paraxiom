@@ -1,19 +1,16 @@
 [package]
-authors = ["Phala Network"]
-edition = "2021"
-name = "phat-offchain-rollup"
+name = "pallet-oracle"
 version = "0.1.0"
-license = "Apache 2.0"
-homepage = "https://phala.network/"
-repository = "https://github.com/Phala-Network/phala-blockchain"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [package.metadata.docs.rs]
-targets = ["x86_64-unknown-linux-gnu"]
+targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.1", default-features = false, features = ["derive", "max-encoded-len"] }
 scale-info = { version = "2.1", default-features = false, features = ["derive"] }
-
 primitive-types = { version = "0.12.1", default-features = false, features = ["codec", "byteorder"] }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false }
@@ -24,9 +21,12 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false, optional = true }
 log = { version = "0.4.14", default-features = false }
-
 hex = { version = "0.4", default-features = false }
 hex-literal = "0.4.1"
+
+# Local
+phat-offchain-rollup = { path = "../../pallets/offchain-rollup", default-features = false }
+pallet-registry = { path = "../../pallets/registry", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
@@ -34,8 +34,6 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "
 frame-support-test = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 pink-kv-session = { git = "https://github.com/phala-network/phala-blockchain", tag = "nightly-2023-03-09" }
 assert_matches = "1.4.0"
-pallet-oracle = { path = "../../pallets/oracle", default-features = false }
-pallet-registry = { path = "../../pallets/registry" , default-features = false }
 
 [features]
 default = ["std"]
@@ -52,6 +50,7 @@ std = [
 	"frame-benchmarking/std",
 	"log/std",
     "primitive-types/std",
+	"phat-offchain-rollup/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks"

@@ -2,163 +2,192 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 #![allow(dead_code)]
+use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
+use frame_support::{
+    traits::{ConstU128, ConstU32, ConstU64},
+    BoundedVec,
+};
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/v3/runtime/frame>
 pub use pallet::*;
-use frame_support::{
-	traits::{ConstU32, ConstU64, ConstU128,},
-    BoundedVec, 
-};
-use frame_support::pallet_prelude::{
-		Encode, Decode, TypeInfo, MaxEncodedLen,
-	};
-use sp_std::{
-    borrow::ToOwned, convert::TryFrom, convert::TryInto, 
-    prelude::*, str, vec, vec::Vec
-};
-
-#[cfg(test)]
-mod mock;
-
-#[cfg(test)]
-mod tests;
+use sp_std::{borrow::ToOwned, convert::TryFrom, convert::TryInto, prelude::*, str, vec, vec::Vec};
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-
+pub mod types;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::{*, OptionQuery, ValueQuery}, traits::Bounded};
-	use frame_system::pallet_prelude::*;
+    use crate::types::*;
+    use frame_support::{
+        dispatch::DispatchResultWithPostInfo,
+        pallet_prelude::{OptionQuery, ValueQuery, *},
+        traits::Bounded,
+    };
+    use frame_system::pallet_prelude::*;
+    use sp_core::H256;
 
-	pub type RegStrT = BoundedVec<u8, ConstU32<512>>;
+    #[derive(
+        Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, RuntimeDebugNoBound,
+    )]
+    #[scale_info(skip_type_params(T))]
+    // TODO: think if it makes more sense to use getters instead of public struct fields
+    pub struct ApiFeed<T: Config> {
+        /// Which block number the feed was registered at
+        pub started_at: BlockNumberFor<T>,
+        /// The API endpoint to fetch data from via phat contracts
+        pub url: RegistryFeedUrl<T>,
+        /// The data path to read from the API response
+        pub path: RegistryFeedPath<T>,
+        /// The overall status of the feed. Defaults to "Registered"
+        /// and gets changed to "Active" when rollup is established.
+        pub status: ApiFeedStatus,
+    }
 
-	#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-	#[cfg_attr(feature = "std", derive(Debug))]
-	pub struct ApiFeed<BlockNumber> {
-		requested_block_number: BlockNumber,
-		url: Option<RegStrT>,
-	}
+    /// Configure the pallet by specifying the parameters and types on which it depends.
+    #[pallet::config]
+    pub trait Config: frame_system::Config {
+        /// Because this pallet emits events, it depends on the runtime's definition of an event.
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-	/// Configure the pallet by specifying the parameters and types on which it depends.
-	#[pallet::config]
-	pub trait Config: frame_system::Config {
-		/// Because this pallet emits events, it depends on the runtime's definition of an event.
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-		
-	}
+        /// Constants
+        #[pallet::constant]
+        type MaxUrlSize: Get<u32>;
+        #[pallet::constant]
+        type MaxKeySize: Get<u32>;
+        #[pallet::constant]
+        type MaxPathSize: Get<u32>;
+        // #[pallet::constant]
+        // type MaxNameSize: Get<u32>;
+    }
 
-	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
-	pub struct Pallet<T>(_);
+    #[pallet::pallet]
+    #[pallet::generate_store(pub(super) trait Store)]
+    pub struct Pallet<T>(_);
 
-	/// Storage map for the feeds
+    /// A 2D storage map of all feeds which the registry keeps track of.
+    ///
+    /// The main mapping is [Account ID] -> [Feed Key] -> [ApiFeed / Feed URL].
     #[pallet::storage]
-	#[pallet::getter(fn api_feeds)]
-	pub type ApiFeeds<T: Config> =
-		StorageDoubleMap<
-		_, Twox64Concat, T::AccountId, 
-		Twox64Concat, RegStrT, 
-		ApiFeed<T::BlockNumber>
-		>;
-
-    /// Storage map for the feed URL Endpoint
-    #[pallet::storage]
-	#[pallet::getter(fn reporter)]
-	// pub type ReporterConfig<T> = StorageValue<_, Twox64Concat, OptionQuery, AccountId, BoundedVec<u8, <T as Config>::StrLimit>>;
-	pub(super) type Reporter<T: Config> = StorageMap
-    <
+    #[pallet::getter(fn api_feeds)]
+    pub type ApiFeeds<T: Config> = StorageDoubleMap<
         _,
-        Blake2_128Concat,
+        Twox64Concat,
         T::AccountId,
-        BoundedVec<BoundedVec<u8,  ConstU32<100> >,  ConstU32<100>> ,
-        ValueQuery 
+        Twox64Concat,
+        RegistryFeedKey<T>,
+        ApiFeed<T>,
     >;
-    
 
-	// Pallets use events to inform users when important changes are made.
-	// https://docs.substrate.io/v3/runtime/events-and-errors
-	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		/// New feed is submitted.
-		RegFeed {
-			sender: T::AccountId,
-            key: RegStrT,
-            feed: ApiFeed<T::BlockNumber>,
-		},
-        /// Apifeed is removed.
-		UnRegFeed {
-			sender: T::AccountId,
-            key: RegStrT,
-            feed: ApiFeed<T::BlockNumber>,
-		},
-	}
+    // Events
+    #[pallet::event]
+    #[pallet::generate_deposit(pub(super) fn deposit_event)]
+    pub enum Event<T: Config> {
+        /// New feed registered
+        FeedRegistered {
+            caller: T::AccountId,
+            key: RegistryFeedKey<T>,
+            feed: ApiFeed<T>,
+        },
+        /// Existing feed unregistered
+        FeedUnregistered {
+            caller: T::AccountId,
+            key: RegistryFeedKey<T>,
+            feed: ApiFeed<T>,
+        },
+    }
 
-	// Errors inform users that something went wrong.
-	#[pallet::error]
-	pub enum Error<T> {
-		/// Error names should be descriptive.
-		NoneValue,
-		/// Errors should have helpful documentation associated with them.
-		StorageOverflow,
-	}
+    // Errors
+    #[pallet::error]
+    pub enum Error<T> {
+        /// Error names should be descriptive.
+        NoneValue,
+        /// Errors should have helpful documentation associated with them.
+        StorageOverflow,
+    }
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+    // Hooks
+    #[pallet::hooks]
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
-	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
-	// These functions materialize as "extrinsics", which are often compared to transactions.
-	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-		
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
-		#[pallet::call_index(0)]
-		#[pallet::weight(Weight::from_ref_time(10_000) + T::DbWeight::get().reads_writes(1,1))]
-		pub fn reg_feed(
+    // Non-callable (internal) Methods
+    impl<T: Config> Pallet<T> {
+        /// Checks if a feed exists and is active.
+        pub fn is_active(account_id: T::AccountId, key: RegistryFeedKey<T>) -> bool {
+            if let Some(feed) = <ApiFeeds<T>>::get(&account_id, key) {
+                return feed.status == ApiFeedStatus::Active;
+            }
+
+            false
+        }
+    }
+
+    // Extrinsics
+    #[pallet::call]
+    impl<T: Config> Pallet<T> {
+        /// Adds an API feed (in the form of a URL) to the storage to keep track of it and request
+        /// data from it.
+        ///
+        /// This origin must be root until further mechanisms for adding feeds is introduced such as
+        /// Parachains adding feeds and putting up a staked amount as an economic incentive to avoid
+        /// providing bad data.
+        #[pallet::call_index(0)]
+        #[pallet::weight(Weight::from_ref_time(10_000) + T::DbWeight::get().reads_writes(1,1))]
+        pub fn register_feed(
             origin: OriginFor<T>,
-            key: RegStrT,
-            url: RegStrT,
+            key: RegistryFeedKey<T>,
+            url: RegistryFeedUrl<T>,
+            path: RegistryFeedPath<T>,
+            // TODO: add topic field
         ) -> DispatchResult {
-			let who = ensure_signed(origin)?;
+            let who = ensure_signed(origin)?;
 
-			let block_number = <frame_system::Pallet<T>>::block_number();
-			let feed = ApiFeed {
-					requested_block_number: block_number,
-					url: Some(url),
-				};
-			ApiFeeds::<T>::insert(&who, &key, feed.clone());
+            let block_number = <frame_system::Pallet<T>>::block_number();
+            let feed = ApiFeed {
+                started_at: block_number,
+                url,
+                path,
+                status: ApiFeedStatus::Registered,
+            };
 
-			// Emit an event.
-			Self::deposit_event(Event::RegFeed { sender: who, key, feed });
-			Ok(())
-		}
+            // Insert the feed into storage.
+            <ApiFeeds<T>>::insert(&who, &key, feed.clone());
+            // Emit an event.
+            Self::deposit_event(Event::FeedRegistered {
+                caller: who,
+                key,
+                feed,
+            });
 
-		/// An example dispatchable that may throw a custom error.
-		#[pallet::call_index(1)]
-		#[pallet::weight(Weight::from_ref_time(10_000) + T::DbWeight::get().reads_writes(1,1))]
-		pub fn unreg_feed(
-            origin: OriginFor<T>,
-            key: RegStrT,
-        ) -> DispatchResult {
-            let who = ensure_signed(origin.clone())?;
-
-			let feed_exists = ApiFeeds::<T>::contains_key(&who, &key);
-			if feed_exists {
-				let feed = Self::api_feeds(&who, &key).unwrap();
-				<ApiFeeds<T>>::remove(&who, &key);
-				Self::deposit_event(Event::UnRegFeed { sender: who, key, feed });
-				Ok(())
-			} else {
-				Err(DispatchError::CannotLookup)
-			}
-
+            Ok(())
         }
 
-	}
+        /// Removes a feed from storage.
+        ///
+        /// The origin must be the same as the creator which first registered the feed. The only
+        /// other scenario which would cause an feed to be removed is having bad data (getting slashed)
+        /// or other uptime metrics (e.g. the feed errors out too many times).
+        #[pallet::call_index(1)]
+        #[pallet::weight(Weight::from_ref_time(10_000) + T::DbWeight::get().reads_writes(1,1))]
+        pub fn unregister_feed(origin: OriginFor<T>, key: RegistryFeedKey<T>) -> DispatchResult {
+            let who = ensure_signed(origin.clone())?;
+
+            // Remove the feed from storage if it exists.
+            // This also implicitly checks that the feed is owned by the origin account.
+            if let Some(feed) = <ApiFeeds<T>>::get(&who, &key) {
+                <ApiFeeds<T>>::remove(&who, &key);
+                Self::deposit_event(Event::FeedUnregistered {
+                    caller: who,
+                    key,
+                    feed,
+                });
+                Ok(())
+            } else {
+                // otherwise, return an error
+                Err(DispatchError::CannotLookup)
+            }
+        }
+    }
 }

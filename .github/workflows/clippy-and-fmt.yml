@@ -1,0 +1,26 @@
+name: Clippy and Fmt
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  clippy-and-fmt:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: sudo apt install --assume-yes build-essential git clang curl libssl-dev protobuf-compiler
+    - name: Install toolchain
+      run: rustup default stable && rustup toolchain install nightly-2023-03-09 && rustup default nightly-2023-03-09 && rustup component add clippy --toolchain nightly-2023-03-09-x86_64-unknown-linux-gnu && rustup component add rustfmt --toolchain nightly-2023-03-09-x86_64-unknown-linux-gnu
+    - name: Run fmt
+      run: cargo +nightly-2023-03-09 fmt
+    - name: Run clippy
+      run: cargo clippy

@@ -1,6 +1,6 @@
 [package]
 name = "pallet-registry"
-authors = ["Sylvain Cormier"]
+authors = ["Sylvain Cormier", "Faisal Al-Tameemi", "Arthur F.M."]
 description = ""
 version = "0.1.0"
 license = "Unlicense"

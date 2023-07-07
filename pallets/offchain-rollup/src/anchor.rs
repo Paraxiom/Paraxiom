@@ -4,12 +4,12 @@
 //! kv-store for Phat Contract to read and write, and allows the Phat Contract to send arbitrary
 //! messages to the blockchain to trigger custom actions.
 //!
-//! Off-chain Rollup enables ACID operations on the blockchain for Phat Contracts. The kv-stroe
-//! access and the customzed actions are wrapped as Rollup Transactions. It guarantees that the
+//! Off-chain Rollup enables ACID operations on the blockchain for Phat Contracts. The kv-store
+//! access and the customized actions are wrapped as Rollup Transactions. It guarantees that the
 //! transactions are isolated and atomic. No conflicting transactions will be accepted.
 //!
-//! The anchor pallet is designed to implement such ACID machanism. It accepts the Rollup
-//! Transaction submitted by the rollup client running in Phat Contract, validates it, and aplly
+//! The anchor pallet is designed to implement such ACID mechanism. It accepts the Rollup
+//! Transaction submitted by the rollup client running in Phat Contract, validates it, and apply
 //! the changes.
 //!
 //! On the other hand, the pallet provides two features to the other pallets:
@@ -143,6 +143,7 @@ pub mod pallet {
         /// Claims a name and assign the caller as the owner of the name
         ///
         /// Once the name is claimed, we don't allow to change the owner or deregister any more.
+        #[pallet::call_index(0)]
         #[pallet::weight(0)]
         #[transactional]
         pub fn claim_name(origin: OriginFor<T>, name: H256) -> DispatchResult {
@@ -160,6 +161,7 @@ pub mod pallet {
         }
 
         /// Triggers a rollup with an optional nonce
+        #[pallet::call_index(1)]
         #[pallet::weight(0)]
         #[transactional]
         pub fn rollup(
@@ -319,7 +321,8 @@ pub mod pallet {
         };
         // Pallets
         use frame_support::{assert_noop, assert_ok};
-        use kv_session::ReadTracker;
+        use pallet_oracle::types::ResponseRecord;
+        use pink_kv_session::ReadTracker;
 
         const NAME1: H256 = H256([1u8; 32]);
 
@@ -387,14 +390,14 @@ pub mod pallet {
                 assert_eq!(Anchor::states(NAME1, bvec(b"key")), None);
 
                 // Action received
-                let resposne = crate::oracle::ResponseRecord {
+                let response = ResponseRecord {
                     owner: sp_runtime::AccountId32::from([0u8; 32]),
                     contract_id: NAME1,
                     pair: bvec(b"polkadot_usd"),
                     price: 5_000000000000,
                     timestamp_ms: 1000,
                 };
-                let act = Action::Reply(bvec(&resposne.encode()));
+                let act = Action::Reply(bvec(&response.encode()));
                 let _ = take_events();
                 assert_ok!(Anchor::rollup(
                     Origin::signed(1),
@@ -406,10 +409,11 @@ pub mod pallet {
                     },
                     5u128
                 ));
+                dbg!(take_events());
                 assert_eq!(
                     take_events(),
                     vec![
-                        RuntimeEvent::Oracle(crate::oracle::Event::<Test>::QuoteReceived {
+                        RuntimeEvent::Oracle(pallet_oracle::Event::<Test>::QuoteReceived {
                             contract: NAME1,
                             submitter: 1,
                             owner: sp_runtime::AccountId32::from([0u8; 32]),
@@ -534,10 +538,10 @@ pub mod pallet {
 
         #[test]
         fn queue_e2e() {
-            use kv_session::traits::KvSession;
-            use kv_session::traits::KvSnapshot;
-            use kv_session::traits::QueueSession;
-            use kv_session::{Error, Result};
+            use pink_kv_session::traits::KvSession;
+            use pink_kv_session::traits::KvSnapshot;
+            use pink_kv_session::traits::QueueSession;
+            use pink_kv_session::{Error, Result};
 
             struct ChainStorage {
                 name: H256,
@@ -556,7 +560,7 @@ pub mod pallet {
                 }
             }
 
-            impl kv_session::traits::BumpVersion for ChainStorage {
+            impl pink_kv_session::traits::BumpVersion for ChainStorage {
                 fn bump_version(&self, version: Option<Vec<u8>>) -> Result<Vec<u8>> {
                     match version {
                         Some(v) => {
@@ -569,7 +573,7 @@ pub mod pallet {
             }
 
             struct ScaleCodec;
-            impl kv_session::traits::QueueIndexCodec for ScaleCodec {
+            impl pink_kv_session::traits::QueueIndexCodec for ScaleCodec {
                 fn encode(number: u32) -> Vec<u8> {
                     number.encode()
                 }
@@ -579,8 +583,8 @@ pub mod pallet {
                 }
             }
 
-            fn test_client() -> kv_session::Session<ChainStorage, ReadTracker, ScaleCodec> {
-                kv_session::Session::new(
+            fn test_client() -> pink_kv_session::Session<ChainStorage, ReadTracker, ScaleCodec> {
+                pink_kv_session::Session::new(
                     ChainStorage { name: NAME1 },
                     ReadTracker::new(),
                     b"_queue/",
@@ -589,13 +593,13 @@ pub mod pallet {
             }
 
             fn rollup_tx(
-                tx: kv_session::traits::KvTransaction,
+                tx: pink_kv_session::traits::KvTransaction,
                 kvdb: ChainStorage,
             ) -> Option<RollupTx> {
-                let tx = kv_session::rollup::rollup(
-                    kvdb,
+                let tx = pink_kv_session::rollup::rollup(
+                    &kvdb,
                     tx,
-                    kv_session::rollup::VersionLayout::Standalone {
+                    pink_kv_session::rollup::VersionLayout::Standalone {
                         key_postfix: "_ver".into(),
                     },
                 )

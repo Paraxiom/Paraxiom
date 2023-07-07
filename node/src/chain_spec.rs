@@ -182,7 +182,6 @@ fn testnet_genesis(
     id: ParaId,
 ) -> paraxiom_runtime::GenesisConfig {
     paraxiom_runtime::GenesisConfig {
-    
         system: paraxiom_runtime::SystemConfig {
             code: paraxiom_runtime::WASM_BINARY
                 .expect("WASM binary was not build, please build it!")
@@ -222,5 +221,6 @@ fn testnet_genesis(
             safe_xcm_version: Some(SAFE_XCM_VERSION),
         },
         assets: Default::default(),
+        democracy: Default::default(),
     }
 }
