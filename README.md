@@ -107,21 +107,6 @@ cargo build --release
 ### Run a zombienet
 To test the parachain along with a Relay chain, we can use [Zombienets](https://github.com/paritytech/zombienet). The instructions are in the Zombienet repository.
 
-#### Phat
-
-lorem ipsum
-
-##### Run rollups test
-
-```
-cd ~/phat-offchain-rollup/phat
-
-yarn install
-
-reset && yarn devphase contract test
-```
-
-
 ---
 
 ## Contributions
