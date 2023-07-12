@@ -3,9 +3,9 @@
 
 The goal of this project is to offer a data aggregation and trustless oracle system as native parachain in the
 DotSama ecosystem. This means:
-- Registering new feeds, 
-- Consuming data from a registered feeds (aka. sources) via XCM,
-- A staking / slashing mechanism to ensure the game-theoretic elements of the process.
+- Registering new feeds
+- Consuming data from a registered feeds (aka. sources) via XCM
+- A staking / slashing mechanism to ensure the game-theoretic elements of the process
 
 The value ...
 
@@ -58,7 +58,13 @@ The choice of this architecture becomes clear when you consider a separation of 
 
 ### Oracle Pallet
 
-....
+The oracle pallet is responsible for managing the process of requesting data from a feed (i.e. a data source) and aggregating the data from multiple sources for the same topic.
+
+![Registry <> Oracle ](./images/registry-oracle-pallets.png)
+
+The diagram above shows how the feeds are registered in the registry pallet and then used by the oracle pallet to request data using the provided API sources.
+
+Requesting data from the Oracle pallet is done via RPC (current implementation) and will be available over XCM as well.
 
 > Reference: [pallet-oracle](./pallets/oracle)
 
