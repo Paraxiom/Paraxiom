@@ -3,11 +3,10 @@
 
 The goal of this project is to offer a data aggregation and trustless oracle system as native parachain in the
 DotSama ecosystem. This means:
+
 - Registering new feeds
 - Consuming data from a registered feeds (aka. sources) via XCM
 - A staking / slashing mechanism to ensure the game-theoretic elements of the process
-
-The value ...
 
 
 ## Architecture
@@ -71,19 +70,27 @@ Requesting data from the Oracle pallet is done via RPC (current implementation) 
 
 #### Feed Request
 
-...
+At the current stage of the PoC, the Oracle pallet is reachable via RPC requests. This means that a user can request data from a feed by sending a request to the Oracle pallet via RPC.
 
+> Note: This project intends to utilize the power of XCM as a request-response channel for other parachains to request data from the Oracle.
+
+Each data request must include an identifier for the feed or a topic (abstracts over multiple sources). Data requests can also specify an aggregation method to be applied to the data sources.
+
+Each data request is associated with a randomly generated ID which provides identification for the request. This ID is used to retrieve the data from the Oracle pallet.
 
 #### Phala Phat Contracts
 
-...
+The current implementation leverages Phat contracts to request data from an API URL (i.e. feed source). This is done by creating a contract which is then deployed on the Phala network. The contract is responsible for requesting data over HTTP and then sending it back to the Oracle pallet.
+
+This is only one method for getting data over HTTP (i.e. offchain), however, the Oracle pallet is responsible for abstracting away the method of getting data over HTTP. This means that the Oracle pallet can be used with any method of getting data over HTTP (e.g. offchain workers or smart contracts deployed on other networks like Astar with DIA).
 
 > Reference: [phat README](./phat/README.md)
 
 #### Offchain Workers
 
-...
+Offchain workers offer an alternative to Phat Contracts for fetching data over HTTP. The usage of offchain workers is approached as a connection pool to allow getting data from the offchain world.
 
+> Note: other TEE solutions can be used as well to increase the trust-less-ness of the data sources.
 
 ---
 
